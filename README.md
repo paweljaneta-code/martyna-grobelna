@@ -11,12 +11,7 @@ bez builda i bez zależności — GitHub Pages serwuje pliki wprost z gałęzi `
 
 | Plik | Co to |
 |---|---|
-| `index.html` | strona główna: hero, „jak pracuję", „formy spotkań", kontakt |
-| `o-mnie.html` | rozwinięcie wizytówki — wykształcenie, doświadczenie |
-| `terapia-indywidualna.html` | opis formy spotkań |
-| `terapia-partnerska.html` | opis formy spotkań |
-| `cennik.html` | ceny i zasady odwoływania |
-| `styl.css` | jeden arkusz dla wszystkich podstron |
+| `index.html` i podstrony | **pliki składane, nie pisane ręcznie** — patrz niżej |
 | `redaktor.html` | narzędzie do składania strony klikaniem |
 | `assets/ikony.js` | 60 grafik kreską, w sześciu grupach |
 | `assets/kroje.js` | spis 14 rodzin pisma do wyboru |
@@ -37,7 +32,12 @@ Co się w nim da:
 | Chcesz | Jak |
 |---|---|
 | zmienić dowolny tekst | kliknij w niego wprost w podglądzie i pisz |
+| przejść na inną podstronę | spis **Strony** na samej górze lewej kolumny |
+| dodać podstronę | przycisk **+ Nowa podstrona** |
 | zmienić kolejność sekcji | przeciągnij za uchwyt ⠿ w lewej kolumnie |
+| **przesunąć element** | dodaj sekcję **Swobodne płótno**, chwyć niebieskie kółko na bloku |
+| **zmienić rozmiar elementu** | chwyć żółty róg bloku na płótnie |
+| zmienić kolor sekcji albo bloku | pola koloru w panelu po prawej |
 | ukryć sekcję bez kasowania | ikona oka przy jej nazwie |
 | dodać sekcję | lista „+ Dodaj sekcję" pod spisem |
 | zmienić grafikę | kliknij ją w podglądzie — otworzy się spis 60 rysunków |
@@ -52,21 +52,46 @@ skończysz, kliknij **Pobierz projekt**. Dostaniesz plik `projekt-strony.json`
 z każdą decyzją: tekstami, krojami, kolorami, kolejnością sekcji i zdjęciami.
 Ten plik odsyłasz — z niego widać dokładnie, jak ma wyglądać strona.
 
-**Pobierz stronę** daje gotowy `index.html`, którym można podmienić obecny
-plik w repozytorium.
+**Pobierz strony** daje komplet plików HTML do podmiany w repozytorium
+(pobierają się jeden po drugim, z przerwą — przeglądarki blokują serię pobrań
+wystrzeloną naraz).
 
-### Czego redaktor świadomie nie robi
+### Swobodne płótno — jak to działa
 
-Nie pozwala przeciągać elementów w dowolne miejsce, jak w Canvie. Canva
-projektuje na kartkę o stałym rozmiarze, a strona musi wyglądać dobrze od
-360 px do 2560 px szerokości. Swobodne pozycjonowanie daje układ, który
-rozpada się na telefonie — a telefon to większość odwiedzin. Stąd kontrola
-nad kolejnością, stroną zdjęcia, wyrównaniem i odstępami zamiast nad
-współrzędnymi.
+Sekcja **Swobodne płótno** trzyma bloki, które przesuwa się myszą: nagłówki,
+teksty, miejsca na zdjęcia, grafiki i przyciski. Każdy ma własny kolor pisma,
+własne tło, wyrównanie i wielkość.
+
+Bloki **przyciągają się do siatki dwunastu kolumn**, a nie stają w dowolnym
+punkcie. To celowe. Canva projektuje na kartkę o stałym rozmiarze; strona musi
+wyglądać dobrze od 360 px do 2560 px, a telefon to większość odwiedzin.
+Przy dowolnych współrzędnych telefon dostaje układ w kawałkach.
+
+Na ekranie węższym niż 760 px płótno przestaje być siatką i układa bloki
+w jedną kolumnę — **od góry do dołu, a przy równej wysokości od lewej do
+prawej**. Czyli kolejność na telefonie wynika z tego, gdzie postawisz bloki
+na płótnie.
+
+## Pułapka: plików HTML nie edytuje się ręcznie
+
+`index.html`, `o-mnie.html`, `terapia-indywidualna.html`,
+`terapia-partnerska.html` i `cennik.html` **powstają z projektu**, a nie są
+pisane ręcznie. Poprawka wpisana wprost w plik zniknie przy najbliższej
+przebudowie. Zmiany wprowadza się w redaktorze albo w
+`assets/projekt-domyslny.js`, a potem:
+
+```bash
+node scripts/zbuduj-strony.mjs                      # z projektu domyślnego
+node scripts/zbuduj-strony.mjs projekt-strony.json  # z pliku z redaktora
+```
+
+Z tego samego powodu nie ma osobnego `styl.css`: wygląd opisuje funkcja
+`css()` w `assets/strona.js`, a redaktor i gotowa strona biorą go stamtąd.
+Dwa arkusze stylów rozjechałyby się po tygodniu.
 
 ## Jak wprowadzać zmiany
 
-Strona nie ma etapu budowania, więc każda zmiana jest natychmiastowa:
+Strona nie ma etapu budowania po stronie GitHuba — po przebudowie wystarczy:
 
 ```bash
 git add -A && git commit -m "opis zmiany" && git push

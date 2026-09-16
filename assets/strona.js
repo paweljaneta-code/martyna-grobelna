@@ -148,6 +148,34 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
   color:var(--miekki);text-align:center;padding:24px;border-radius:var(--promien);overflow:hidden}
 .mapa iframe{width:100%;height:100%;border:0;display:block}
 
+/* Pas tła pod sekcją. display:flow-root domyka marginesy dziecka —
+   bez tego margines sekcji wychodziłby poza kolorowe tło. */
+.pas{display:flow-root}
+
+/* Swobodne płótno: dwanaście kolumn, rzędy o stałej wysokości.
+   Bloki stawia się na siatce, więc da się je przesuwać myszą, a mimo to
+   układ nie rozsypie się przy innej szerokości okna. */
+.plotno{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--luka,14px);
+  grid-auto-rows:var(--rzad,44px);max-width:var(--szer);margin:0 auto;padding:0 24px}
+.plotno-blok{min-width:0;display:flex;flex-direction:column;justify-content:center;overflow-wrap:anywhere}
+.plotno-blok--naglowek{font-family:var(--naglowki);font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.plotno-blok--tekst{line-height:1.6}
+.plotno-blok--zdjecie{padding:0}
+.plotno-blok--zdjecie img,.plotno-blok--zdjecie svg{width:100%;height:100%;object-fit:cover;display:block}
+.plotno-blok--grafika{align-items:center}
+.plotno-blok--grafika svg{width:100%;height:100%;max-height:100%}
+.plotno-blok--przycisk{align-items:flex-start;justify-content:center}
+.plotno-puste{background:var(--akcent);border-radius:var(--promien);display:flex;
+  align-items:center;justify-content:center;width:100%;height:100%;
+  font-family:var(--naglowki);font-size:13px;color:var(--miekki);text-align:center;padding:12px}
+
+/* Cennik: pozycja i kwota rozstrzelone do krawędzi. */
+.cennik{list-style:none;padding:0;margin:0 auto;max-width:68ch}
+.cennik li{display:flex;align-items:baseline;gap:12px;padding:14px 0;border-bottom:1px solid var(--kreska)}
+.cennik li:last-child{border-bottom:0}
+.cennik__kropki{flex:1 1 auto;border-bottom:1px dotted var(--kreska)}
+.cennik__kwota{font-family:var(--naglowki);font-size:15px;font-weight:600;white-space:nowrap}
+
 .stopka{padding:28px 24px 36px;text-align:center;font-family:var(--naglowki);font-size:12px;color:var(--miekki)}
 .stopka a{text-decoration:none}
 
@@ -163,6 +191,10 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
   .kontakt__siatka{grid-template-columns:1fr}
   .formy--3{grid-template-columns:repeat(2,minmax(0,1fr))}
   .galeria--4{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:760px){
+  .plotno{display:flex;flex-direction:column;grid-auto-rows:auto}
+  .plotno-blok{grid-column:auto !important;grid-row:auto !important;min-height:var(--min-tel,auto)}
 }
 @media (max-width:620px){
   body{font-size:${(16 * (m.skala || 1)).toFixed(1)}px}
@@ -295,36 +327,113 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
         <div class="kontakt__siatka" style="--kol:${(s.kolumny || []).length || 3}">${kol}</div>${mapa}</div></section>`;
     },
 
+    /* Swobodne płótno. Blok niesie miejsce na siatce (x, y, szerokość,
+       wysokość w jednostkach), własne kolory i treść. „order" liczymy tu,
+       przy składaniu — decyduje o kolejności na telefonie, gdzie siatka
+       zamienia się w kolumnę. */
+    plotno(s, i, t) {
+      const kolejnosc = [...(s.bloki || [])]
+        .map((b, j) => ({ j, y: b.y, x: b.x }))
+        .sort((a, b) => a.y - b.y || a.x - b.x)
+        .reduce((mapa, w, n) => (mapa[w.j] = n, mapa), {});
+
+      const bloki = (s.bloki || []).map((b, j) => {
+        const styl = [
+          "grid-column:" + (b.x + 1) + "/span " + b.w,
+          "grid-row:" + (b.y + 1) + "/span " + b.h,
+          "order:" + kolejnosc[j],
+          "--min-tel:" + (b.h * 44) + "px",
+          b.kolorTekstu ? "color:" + b.kolorTekstu : "",
+          b.kolorTla ? "background:" + b.kolorTla + ";padding:14px;border-radius:var(--promien)" : "",
+          b.wyrownanie ? "text-align:" + b.wyrownanie : "",
+          (b.rodzaj === "naglowek" || b.rodzaj === "tekst") && b.wielkosc
+            ? "font-size:" + Number(b.wielkosc).toFixed(2) + "rem" : "",
+        ].filter(Boolean).join(";");
+
+        let wnetrze;
+        if (b.rodzaj === "zdjecie") {
+          wnetrze = b.zdjecie
+            ? '<img src="' + b.zdjecie + '" alt="' + esc(b.opis || "") + '" style="border-radius:var(--promien)">'
+            : '<div class="plotno-puste">miejsce na zdjęcie</div>';
+        } else if (b.rodzaj === "grafika") {
+          wnetrze = ikona(b.ikona) || '<div class="plotno-puste">miejsce na grafikę</div>';
+        } else if (b.rodzaj === "przycisk") {
+          wnetrze = '<a class="przycisk" href="' + esc(b.cel || "#") + '">' +
+                    pole(b.tresc, "sekcje." + i + ".bloki." + j + ".tresc", t) + "</a>";
+        } else {
+          wnetrze = pole(b.tresc, "sekcje." + i + ".bloki." + j + ".tresc", t, "div");
+        }
+
+        const zaczepy = zaczep(t, 'data-blok="' + i + "." + j + '"' +
+          (b.rodzaj === "zdjecie"
+            ? ' data-gniazdo="blok-zdjecie" data-sciezka="sekcje.' + i + ".bloki." + j + '.zdjecie"' : "") +
+          (b.rodzaj === "grafika"
+            ? ' data-gniazdo="ikona" data-sciezka="sekcje.' + i + ".bloki." + j + '.ikona"' : ""));
+
+        return '<div class="plotno-blok plotno-blok--' + esc(b.rodzaj) + '" style="' + styl + '"' + zaczepy + ">" +
+               wnetrze + "</div>";
+      }).join("");
+
+      return '<section class="sekcja' + ODSTEP[s.odstep || "zwykly"] + '">' +
+        '<div class="plotno" style="--rzad:' + (s.rzad || 44) + "px;--luka:" + (s.luka ?? 14) +
+        "px;min-height:" + ((s.wysokosc || 10) * (s.rzad || 44)) + 'px">' + bloki + "</div></section>";
+    },
+
+    cennik(s, i, t) {
+      const pozycje = (s.pozycje || []).map((p, j) =>
+        "<li>" + pole(p.nazwa, "sekcje." + i + ".pozycje." + j + ".nazwa", t, "span") +
+        '<span class="cennik__kropki"></span>' +
+        pole(p.kwota, "sekcje." + i + ".pozycje." + j + ".kwota", t, "span", "cennik__kwota") + "</li>").join("");
+      const uwagi = (s.uwagi || []).map((u, j) =>
+        pole(u, "sekcje." + i + ".uwagi." + j, t, "p")).join("");
+      const tytul = s.tytul
+        ? pole(s.tytul, "sekcje." + i + ".tytul", t, "h2",
+               "sekcja__tytul" + (s.wyrownanieTytulu === "srodek" ? " sekcja__tytul--srodek" : "")) : "";
+      return '<section class="sekcja' + ODSTEP[s.odstep || "zwykly"] + ' obszar">' + tytul +
+        '<ul class="cennik">' + pozycje + "</ul>" +
+        (uwagi ? '<div class="proza" style="max-width:68ch;margin:28px auto 0;color:var(--miekki);font-size:.95rem">' +
+                 uwagi + "</div>" : "") + "</section>";
+    },
+
     stopka(s, i, t) {
       return `<footer class="stopka">${pole(s.tresc, `sekcje.${i}.tresc`, t, "span")}</footer>`;
     },
   };
 
-  function html(projekt, tryb) {
-    return projekt.sekcje.map((s, i) => {
+  /* Bierze JEDNĄ stronę, nie cały projekt — od wersji 2 projekt trzyma
+     kilka stron, a ścieżki pól ("sekcje.2.tytul") liczone są względem
+     strony, więc redaktor rozstrzyga je wobec strony bieżącej. */
+  function html(strona, tryb) {
+    return strona.sekcje.map((s, i) => {
       if (s.widoczna === false) return "";
       const rysuj = RYSUJ[s.typ];
       if (!rysuj) return "";
-      const tresc = rysuj(s, i, tryb);
+      let tresc = rysuj(s, i, tryb);
+      if (s.tloSekcji)
+        tresc = '<div class="pas" style="background:' + esc(s.tloSekcji) + '">' + tresc + '</div>';
       return tryb === "edytor"
-        ? `<div data-sekcja="${s.id}" data-typ="${s.typ}">${tresc}</div>`
+        ? '<div data-sekcja="' + s.id + '" data-typ="' + s.typ + '">' + tresc + '</div>'
         : tresc;
     }).join("\n");
   }
 
-  /* Gotowy, samodzielny plik — to jest to, co ląduje w repozytorium. */
-  function dokument(projekt) {
+  /* Gotowy, samodzielny plik — to jest to, co ląduje w repozytorium.
+     Motyw idzie z projektu, treść i tytuł z wybranej strony. */
+  function dokument(projekt, strona) {
+    strona = strona || projekt.strony[0];
     const m = projekt.motyw;
+    const tytulStrony = strona.tytul || projekt.meta.tytul;
+    const opisStrony = strona.opis || projekt.meta.opis;
     return `<!doctype html>
 <html lang="pl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(projekt.meta.tytul)}</title>
-<meta name="description" content="${esc(projekt.meta.opis)}">
+<title>${esc(tytulStrony)}</title>
+<meta name="description" content="${esc(opisStrony)}">
 <meta property="og:type" content="website">
-<meta property="og:title" content="${esc(projekt.meta.tytul)}">
-<meta property="og:description" content="${esc(projekt.meta.opis)}">
+<meta property="og:title" content="${esc(tytulStrony)}">
+<meta property="og:description" content="${esc(opisStrony)}">
 <meta property="og:locale" content="pl_PL">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/fonty.css">
@@ -333,7 +442,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
 <body>
 <a class="skip" href="#tresc">Przejdź do treści</a>
 <main id="tresc">
-${html(projekt, "eksport")}
+${html(strona, "eksport")}
 </main>
 </body>
 </html>

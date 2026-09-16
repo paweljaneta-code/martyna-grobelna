@@ -49,6 +49,14 @@ button{cursor:pointer}
 .panel h2{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ui-miekki);
   margin:0;padding:14px 14px 8px;position:sticky;top:0;background:var(--ui-panel);z-index:2}
 
+/* ---------- lista stron ---------- */
+.strony{list-style:none;margin:0;padding:0 8px 4px}
+.strony li{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:7px;
+  border:1px solid transparent;margin-bottom:2px;cursor:pointer}
+.strony li:hover{background:var(--ui-panel2)}
+.strony li[aria-selected="true"]{background:#2b3a55;border-color:var(--ui-akcent);font-weight:600}
+.strony .plik{font-size:10px;color:var(--ui-miekki);flex:0 0 auto}
+
 /* ---------- lista sekcji ---------- */
 .sekcje{list-style:none;margin:0;padding:0 8px 8px}
 .sekcje li{display:flex;align-items:center;gap:6px;padding:8px 8px;border-radius:7px;
@@ -160,7 +168,7 @@ hr{border:0;border-top:1px solid var(--ui-kreska);margin:18px 0}
 
   <button class="btn" id="odNowa">Zacznij od nowa</button>
   <button class="btn" id="wczytaj">Wczytaj projekt…</button>
-  <button class="btn" id="pobierzStrone">Pobierz stronę</button>
+  <button class="btn" id="pobierzStrone">Pobierz strony</button>
   <button class="btn btn--glowny" id="pobierzProjekt">Pobierz projekt</button>
   <input type="file" id="plikProjektu" accept="application/json,.json" hidden>
 </div>
@@ -168,6 +176,12 @@ hr{border:0;border-top:1px solid var(--ui-kreska);margin:18px 0}
 <div class="plansza">
 
   <aside class="panel panel--lewy">
+    <h2>Strony</h2>
+    <ul class="strony" id="listaStron"></ul>
+    <div style="padding:0 12px 14px">
+      <button class="btn" id="dodajStrone" style="width:100%">+ Nowa podstrona</button>
+    </div>
+
     <h2>Sekcje strony</h2>
     <ul class="sekcje" id="listaSekcji"></ul>
     <div style="padding:0 12px 16px">

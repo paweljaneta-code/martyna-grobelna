@@ -4,244 +4,234 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Martyna Grobelna — psychoterapia</title>
-<meta name="description" content="Gabinet psychoterapii. Terapia indywidualna i terapia par — Warszawa oraz spotkania online.">
+<meta name="description" content="Gabinet psychoterapii. Terapia indywidualna i terapia par — stacjonarnie i online.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Martyna Grobelna — psychoterapia">
-<meta property="og:description" content="Terapia indywidualna i terapia par — stacjonarnie i online.">
-<meta property="og:image" content="assets/portret.svg">
+<meta property="og:description" content="Gabinet psychoterapii. Terapia indywidualna i terapia par — stacjonarnie i online.">
 <meta property="og:locale" content="pl_PL">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/fonty.css">
-<link rel="stylesheet" href="styl.css">
+<style>
+:root{
+  --tlo:#efeeec; --tlo2:#e6e4e0; --karta:#ffffff;
+  --tekst:#14130f; --miekki:#56534c; --kreska:#dcd9d3; --akcent:#ece5d4;
+  --promien:2px; --szer:1120px;
+  --naglowki:"Poppins", system-ui, sans-serif;
+  --proza:"EB Garamond", Georgia, serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--tlo);color:var(--tekst);font-family:var(--proza);
+  font-size:17.0px;line-height:1.7;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offset:3px}
+[id]{scroll-margin-top:84px}
+
+.skip{position:absolute;left:-9999px;top:0;background:var(--karta);padding:10px 16px;
+  font-family:var(--naglowki);font-size:14px;z-index:100}
+.skip:focus{left:8px;top:8px}
+
+.pasek{position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--tlo) 92%, transparent);backdrop-filter:blur(8px)}
+.pasek__wnetrze{max-width:var(--szer);margin:0 auto;padding:18px 24px;display:flex;justify-content:var(--pasek-poz,center)}
+.menu{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(20px,6vw,72px);list-style:none;margin:0;padding:0}
+.menu a{font-family:var(--naglowki);font-size:14px;font-weight:500;letter-spacing:.02em;
+  text-decoration:none;padding-bottom:2px;border-bottom:1px solid transparent}
+.menu a:hover{border-bottom-color:var(--tekst)}
+
+.obszar{max-width:var(--szer);margin:0 auto;padding:0 24px}
+.sekcja{margin:clamp(56px,9vw,104px) auto}
+.sekcja--ciasna{margin:clamp(32px,5vw,56px) auto}
+.sekcja--luzna{margin:clamp(80px,13vw,150px) auto}
+.sekcja__tytul{font-family:var(--naglowki);font-size:clamp(22px,3.4vw,30px);font-weight:700;
+  letter-spacing:-.01em;margin:0 0 28px}
+.sekcja__tytul--srodek{text-align:center}
+.karta{background:var(--karta);border-radius:var(--promien);box-shadow:0 1px 2px rgba(20,19,15,.06)}
+.proza{text-align:justify;hyphens:auto}
+.proza p{margin:0 0 1em}
+.proza p:last-child{margin-bottom:0}
+.proza--lewo{text-align:left}
+
+.przyciski{display:flex;flex-wrap:wrap;gap:14px}
+.przyciski--srodek{justify-content:center}
+.przycisk{display:inline-block;font-family:var(--naglowki);font-size:14px;font-weight:500;
+  text-decoration:none;padding:11px 24px;border:1px solid var(--kreska);border-radius:999px;
+  background:var(--karta);box-shadow:0 1px 3px rgba(20,19,15,.08);
+  transition:background .15s ease,border-color .15s ease}
+.przycisk:hover{background:var(--tekst);border-color:var(--tekst);color:var(--karta)}
+
+.hero{margin-top:28px;padding:clamp(32px,5vw,64px);display:grid;
+  grid-template-columns:minmax(0,.9fr) minmax(0,1fr);gap:clamp(32px,6vw,72px);align-items:center}
+.hero--odwrocony .hero__portret{order:2}
+.hero--bezZdjecia{grid-template-columns:minmax(0,1fr)}
+.hero__portret{background:var(--akcent);overflow:hidden;aspect-ratio:1/1.05}
+.hero__portret img{width:100%;height:100%;object-fit:cover}
+.ksztalt-blob{border-radius:64% 36% 43% 57%/52% 44% 56% 48%}
+.ksztalt-kolo{border-radius:50%}
+.ksztalt-luk{border-radius:999px 999px 24px 24px}
+.ksztalt-prostokat{border-radius:var(--promien)}
+.hero__tytul{font-family:var(--naglowki);font-size:clamp(34px,5.4vw,52px);font-weight:700;
+  letter-spacing:-.02em;line-height:1.05;margin:0 0 18px}
+.hero__lead{font-size:1.06rem;margin:0 0 26px}
+.hero .przyciski{margin-top:30px}
+
+.filar{display:grid;grid-template-columns:240px minmax(0,1fr);gap:clamp(24px,5vw,56px);
+  align-items:center;padding:clamp(28px,4vw,44px);margin-bottom:22px}
+.filar--gora{grid-template-columns:minmax(0,1fr);text-align:center}
+.filar--gora .proza{text-align:center}
+.filar__godlo{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.filar__godlo svg{width:96px;height:96px}
+.filar__nazwa{font-family:var(--naglowki);font-size:17px;font-weight:600}
+
+.formy{display:grid;gap:28px;margin:0 auto}
+.formy--2{grid-template-columns:repeat(2,minmax(0,1fr));max-width:760px}
+.formy--3{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1000px}
+.forma{padding:40px 32px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+.forma svg{width:86px;height:86px}
+.forma__nazwa{font-family:var(--naglowki);font-size:19px;font-weight:600;line-height:1.3;margin:0}
+.forma p{margin:0;font-size:.98rem}
+.forma .przycisk{margin-top:auto}
+
+.cytat{max-width:820px;margin:0 auto;text-align:center;padding:0 24px}
+.cytat blockquote{margin:0;font-family:var(--naglowki);font-weight:400;
+  font-size:clamp(20px,3vw,28px);line-height:1.45}
+.cytat figcaption{margin-top:18px;font-size:.92rem;color:var(--miekki);font-family:var(--naglowki)}
+
+.galeria{display:grid;gap:18px}
+.galeria--2{grid-template-columns:repeat(2,1fr)}
+.galeria--3{grid-template-columns:repeat(3,1fr)}
+.galeria--4{grid-template-columns:repeat(4,1fr)}
+.galeria img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--promien);background:var(--akcent)}
+
+.kontakt{background:var(--tlo2);padding:clamp(56px,8vw,96px) 0;margin-top:clamp(56px,9vw,104px)}
+.kontakt__tytul{font-family:var(--naglowki);font-size:clamp(30px,5vw,46px);font-weight:400;
+  text-align:center;margin:0 0 clamp(36px,6vw,64px)}
+.kontakt__siatka{display:grid;grid-template-columns:repeat(var(--kol,3),minmax(0,1fr));gap:clamp(28px,5vw,56px)}
+.kontakt__naglowek{font-family:var(--naglowki);font-size:16px;font-weight:600;margin:0 0 14px}
+.kontakt__blok p{margin:0 0 .3em}
+.godziny{width:100%;border-collapse:collapse;font-size:.95rem}
+.godziny th,.godziny td{text-align:left;font-weight:400;padding:5px 0;vertical-align:top}
+.godziny td{color:var(--miekki);padding-left:12px}
+.mapa{margin-top:clamp(36px,6vw,56px);aspect-ratio:16/6;background:color-mix(in srgb,var(--tlo2) 80%,#000 8%);
+  display:flex;align-items:center;justify-content:center;font-family:var(--naglowki);font-size:14px;
+  color:var(--miekki);text-align:center;padding:24px;border-radius:var(--promien);overflow:hidden}
+.mapa iframe{width:100%;height:100%;border:0;display:block}
+
+/* Pas tła pod sekcją. display:flow-root domyka marginesy dziecka —
+   bez tego margines sekcji wychodziłby poza kolorowe tło. */
+.pas{display:flow-root}
+
+/* Swobodne płótno: dwanaście kolumn, rzędy o stałej wysokości.
+   Bloki stawia się na siatce, więc da się je przesuwać myszą, a mimo to
+   układ nie rozsypie się przy innej szerokości okna. */
+.plotno{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--luka,14px);
+  grid-auto-rows:var(--rzad,44px);max-width:var(--szer);margin:0 auto;padding:0 24px}
+.plotno-blok{min-width:0;display:flex;flex-direction:column;justify-content:center;overflow-wrap:anywhere}
+.plotno-blok--naglowek{font-family:var(--naglowki);font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.plotno-blok--tekst{line-height:1.6}
+.plotno-blok--zdjecie{padding:0}
+.plotno-blok--zdjecie img,.plotno-blok--zdjecie svg{width:100%;height:100%;object-fit:cover;display:block}
+.plotno-blok--grafika{align-items:center}
+.plotno-blok--grafika svg{width:100%;height:100%;max-height:100%}
+.plotno-blok--przycisk{align-items:flex-start;justify-content:center}
+.plotno-puste{background:var(--akcent);border-radius:var(--promien);display:flex;
+  align-items:center;justify-content:center;width:100%;height:100%;
+  font-family:var(--naglowki);font-size:13px;color:var(--miekki);text-align:center;padding:12px}
+
+/* Cennik: pozycja i kwota rozstrzelone do krawędzi. */
+.cennik{list-style:none;padding:0;margin:0 auto;max-width:68ch}
+.cennik li{display:flex;align-items:baseline;gap:12px;padding:14px 0;border-bottom:1px solid var(--kreska)}
+.cennik li:last-child{border-bottom:0}
+.cennik__kropki{flex:1 1 auto;border-bottom:1px dotted var(--kreska)}
+.cennik__kwota{font-family:var(--naglowki);font-size:15px;font-weight:600;white-space:nowrap}
+
+.stopka{padding:28px 24px 36px;text-align:center;font-family:var(--naglowki);font-size:12px;color:var(--miekki)}
+.stopka a{text-decoration:none}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .hero--odwrocony .hero__portret{order:0}
+  .hero__portret{max-width:340px;margin:0 auto}
+  .hero .przyciski{justify-content:center}
+  .hero__tytul,.hero__lead{text-align:center}
+  .filar{grid-template-columns:1fr}
+  .filar__godlo{flex-direction:row;justify-content:center}
+  .filar__godlo svg{width:64px;height:64px}
+  .kontakt__siatka{grid-template-columns:1fr}
+  .formy--3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .galeria--4{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:760px){
+  .plotno{display:flex;flex-direction:column;grid-auto-rows:auto}
+  .plotno-blok{grid-column:auto !important;grid-row:auto !important;min-height:var(--min-tel,auto)}
+}
+@media (max-width:620px){
+  body{font-size:16.0px}
+  .formy--2,.formy--3{grid-template-columns:1fr}
+  .galeria--2,.galeria--3,.galeria--4{grid-template-columns:1fr}
+  .menu{gap:18px 22px}
+  .proza{text-align:left}
+  .mapa{aspect-ratio:4/3}
+}
+@media print{
+  .pasek,.przyciski,.mapa{display:none}
+  body{background:#fff}
+  .karta,.hero{box-shadow:none}
+}</style>
 </head>
 <body>
-
 <a class="skip" href="#tresc">Przejdź do treści</a>
-
-<header class="pasek">
-  <nav class="pasek__wnetrze" aria-label="Główne">
-    <ul class="menu">
-      <li><a href="o-mnie.html">o mnie</a></li>
-      <li><a href="#jak-pracuje">jak pracuję</a></li>
-      <li><a href="#formy-spotkan">formy spotkań</a></li>
-      <li><a href="#kontakt">kontakt</a></li>
-    </ul>
-  </nav>
-</header>
-
 <main id="tresc">
-
-  <!-- ====================== HERO ====================== -->
-  <div class="obszar">
-    <section class="karta hero">
-      <div class="hero__portret">
-        <!-- ZDJĘCIE: podmień assets/portret.svg na assets/portret.jpg i popraw ścieżkę. -->
-        <img src="assets/portret.svg" alt="Portret — Martyna Grobelna" width="400" height="420">
-      </div>
-      <div>
+<header class="pasek"><nav class="pasek__wnetrze" aria-label="Główne"><ul class="menu"><li><a href="o-mnie.html"><span>o mnie</span></a></li><li><a href="index.html#jak-pracuje"><span>jak pracuję</span></a></li><li><a href="index.html#formy-spotkan"><span>formy spotkań</span></a></li><li><a href="index.html#kontakt"><span>kontakt</span></a></li></ul></nav></header>
+<div class="obszar"><section class="karta hero"><div class="hero__portret ksztalt-blob" ><svg viewBox="0 0 400 420" aria-label="Miejsce na zdjęcie" role="img" style="width:100%;height:100%">
+             <rect width="400" height="420" fill="transparent"/>
+             <g fill="none" stroke="rgba(0,0,0,.22)" stroke-width="7" stroke-linecap="round">
+               <circle cx="200" cy="168" r="66"/><path d="M92 352c0-62 48-104 108-104s108 42 108 104"/>
+             </g></svg></div><div>
         <h1 class="hero__tytul">CZEŚĆ!</h1>
-        <!-- TEKST ZASTĘPCZY — do podmiany na własny. -->
-        <p class="hero__lead">
-          Nazywam się Martyna Grobelna.<br>
-          Jestem psycholożką i psychoterapeutką.
-        </p>
-        <div class="proza">
-          <p>
-            Rozmowa o tym, co trudne, wymaga odwagi — i miejsca, w którym da się ją
-            bezpiecznie zacząć. Takie miejsce staram się tworzyć w gabinecie: bez
-            oceniania, we własnym tempie, z uwagą na to, co przynosisz. Także na te
-            części Ciebie, które bywały niewygodne albo odkładane na potem.
-          </p>
-          <p>
-            Pracuję po to, żeby wesprzeć Cię w budowaniu życia, które uznasz za swoje.
-          </p>
-        </div>
-        <div class="przyciski">
-          <a class="przycisk" href="o-mnie.html">więcej o mnie</a>
-          <a class="przycisk" href="#kontakt">umów się na spotkanie</a>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ====================== JAK PRACUJĘ ====================== -->
-  <section class="sekcja obszar" id="jak-pracuje">
-    <h2 class="sekcja__tytul">Jak pracuję?</h2>
-
-    <article class="karta filar">
-      <div class="filar__godlo">
-        <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="26" cy="46" r="11"/>
-          <path d="M10 90C10 72 17 62 26 62s16 10 16 28"/>
-          <circle cx="60" cy="38" r="13"/>
-          <path d="M42 90C42 68 50 56 60 56s18 12 18 34"/>
-          <circle cx="94" cy="50" r="10"/>
-          <path d="M80 90C80 74 86 66 94 66s14 8 14 24"/>
-        </svg>
-        <span class="filar__nazwa">różnorodność</span>
-      </div>
-      <div class="proza">
-        <!-- TEKST ZASTĘPCZY. -->
-        <p>
-          Gabinet jest otwarty niezależnie od tożsamości płciowej, orientacji,
-          modelu relacji, wyznania i pochodzenia. Nie traktuję różnorodności jako
-          tematu do obsłużenia przy okazji — to punkt wyjścia całej mojej praktyki.
-          Pracuję zarówno z osobami w związkach monogamicznych, jak i z osobami
-          praktykującymi konsensualną niemonogamię, a także z osobami
-          neuroróżnorodnymi.
-        </p>
-      </div>
-    </article>
-
-    <article class="karta filar">
-      <div class="filar__godlo">
-        <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M16 76C22 46 46 40 56 58c8 14-8 26-14 14-7-14 14-28 36-22 12 3 18 8 24 14"/>
-          <path d="M102 64 89 62M102 64l-8 11"/>
-        </svg>
-        <span class="filar__nazwa">nurty</span>
-      </div>
-      <div class="proza">
-        <!-- TEKST ZASTĘPCZY. -->
-        <p>
-          Moja praca opiera się na podejściach o potwierdzonej skuteczności i na
-          bieżącej literaturze naukowej. W zależności od tego, z czym zgłasza się
-          dana osoba, korzystam z terapii akceptacji i zaangażowania (ACT), terapii
-          skoncentrowanej na współczuciu (CFT), dialogu motywującego oraz
-          integracyjnej behawioralnej terapii par (IBCT). Wszystkie należą do tak
-          zwanej trzeciej fali terapii poznawczo-behawioralnej.
-        </p>
-      </div>
-    </article>
-
-    <article class="karta filar">
-      <div class="filar__godlo">
-        <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M18 88c0-18 16-22 30-18s28 0 32-14c4-14-6-24-18-20"/>
-          <circle cx="18" cy="88" r="4.5"/>
-          <circle cx="48" cy="70" r="4.5"/>
-          <circle cx="80" cy="56" r="4.5"/>
-          <path d="M62 36V20"/>
-          <path d="M62 21l17 5-17 6"/>
-        </svg>
-        <span class="filar__nazwa">struktura</span>
-      </div>
-      <div class="proza">
-        <!-- TEKST ZASTĘPCZY. -->
-        <p>
-          Zaczynamy od kilku spotkań konsultacyjnych. Służą one temu, żeby
-          porozumieć się co do tego, z czym przychodzisz i czego oczekujesz od
-          terapii. Kiedy kierunek jest już jasny, przechodzimy do pracy nad
-          bieżącymi trudnościami, a czasem także nad wcześniejszymi
-          doświadczeniami. Postępy oglądamy wspólnie i na bieżąco — zarówno jakość
-          naszej relacji, jak i to, czy praca zmierza tam, gdzie miała zmierzać.
-        </p>
-      </div>
-    </article>
-
-    <div class="przyciski przyciski--srodek">
-      <a class="przycisk" href="#kontakt">umów się na spotkanie</a>
-    </div>
-  </section>
-
-  <!-- ====================== FORMY SPOTKAŃ ====================== -->
-  <section class="sekcja obszar" id="formy-spotkan">
-    <h2 class="sekcja__tytul">formy spotkań</h2>
-
-    <div class="formy">
-      <article class="karta forma">
-        <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M34 100c-8-18-10-50 10-66s46-6 49 16c1 6 5 7 5 9s-6 3-8 4c0 6-2 10-7 12-3 1-3 4-3 8v17"/>
-          <path d="M44 68c-7-11 7-21 16-13 7 6 1 17-8 13-7-3-4-13 6-11"/>
-        </svg>
-        <h3 class="forma__nazwa">terapia<br>indywidualna</h3>
-        <!-- TEKST ZASTĘPCZY. -->
-        <p>
-          Dla osób, które mierzą się z trudnościami życiowymi albo z problemami
-          ze zdrowiem psychicznym, a także dla tych, które chcą wprowadzić ważną
-          zmianę.
-        </p>
-        <a class="przycisk" href="terapia-indywidualna.html">dowiedz się więcej</a>
-      </article>
-
-      <article class="karta forma">
-        <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <g transform="translate(-4,2) scale(.75)">
-            <path d="M34 100c-8-18-10-50 10-66s46-6 49 16c1 6 5 7 5 9s-6 3-8 4c0 6-2 10-7 12-3 1-3 4-3 8v17"/>
-          </g>
-          <g transform="translate(34,12) scale(.75)">
-            <path d="M34 100c-8-18-10-50 10-66s46-6 49 16c1 6 5 7 5 9s-6 3-8 4c0 6-2 10-7 12-3 1-3 4-3 8v17" fill="var(--karta)"/>
-          </g>
-        </svg>
-        <h3 class="forma__nazwa">terapia<br>partnerska/par</h3>
-        <!-- TEKST ZASTĘPCZY. -->
-        <p>
-          Dla osób w relacji romantycznej, które chcą zadbać o jakość swojego
-          związku albo rozwiązać powtarzające się konflikty.
-        </p>
-        <a class="przycisk" href="terapia-partnerska.html">dowiedz się więcej</a>
-      </article>
-    </div>
-
-    <div class="przyciski przyciski--srodek" style="margin-top:32px">
-      <a class="przycisk" href="#kontakt">umów się na spotkanie</a>
-      <a class="przycisk" href="cennik.html">cennik</a>
-    </div>
-  </section>
-
-  <!-- ====================== KONTAKT ====================== -->
-  <section class="kontakt" id="kontakt">
-    <div class="obszar">
-      <h2 class="kontakt__tytul">Kontakt</h2>
-
-      <div class="kontakt__siatka">
-        <div class="kontakt__blok">
-          <h3 class="kontakt__naglowek">Zapisy:</h3>
-          <!-- DANE ZASTĘPCZE — podmień adres. -->
-          <p><a href="mailto:kontakt@example.com">kontakt@example.com</a></p>
-        </div>
-
-        <div class="kontakt__blok">
-          <h3 class="kontakt__naglowek">Adres</h3>
-          <!-- DANE ZASTĘPCZE — podmień adres gabinetu. -->
-          <p>ul. Przykładowa 1</p>
-          <p>00-000 Warszawa</p>
-          <p>Polska</p>
-        </div>
-
-        <div class="kontakt__blok">
-          <h3 class="kontakt__naglowek">Dostępność:</h3>
-          <!-- DANE ZASTĘPCZE — podmień godziny. -->
-          <table class="godziny">
-            <tbody>
-              <tr><th scope="row">Poniedziałek</th><td>09:00 – 16:00 (stacjonarnie)</td></tr>
-              <tr><th scope="row">Wtorek</th><td>09:00 – 15:00 (online)</td></tr>
-              <tr><th scope="row">Środa</th><td>09:00 – 15:00 (online)</td></tr>
-              <tr><th scope="row">Czwartek</th><td>09:00 – 15:00 (online)</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!--
-        MAPA. Świadomie pusta: osadzenie Google Maps wciąga skrypty śledzące
-        i wymaga prawdziwego adresu. Gdy adres będzie znany, wstaw tutaj iframe
-        z „Udostępnij → Umieść mapę" i skasuj zastępczy tekst poniżej.
-      -->
-      <div class="mapa">Mapa dojazdu — do wstawienia po ustaleniu adresu gabinetu.</div>
-    </div>
-  </section>
-
+        <p class="hero__lead">Nazywam się Martyna Grobelna. Jestem psycholożką i psychoterapeutką.</p>
+        <div class="proza"><p>Rozmowa o tym, co trudne, wymaga odwagi — i miejsca, w którym da się ją bezpiecznie zacząć. Takie miejsce staram się tworzyć w gabinecie: bez oceniania, we własnym tempie, z uwagą na to, co przynosisz.</p><p>Pracuję po to, żeby wesprzeć Cię w budowaniu życia, które uznasz za swoje.</p></div><div class="przyciski"><a class="przycisk" href="o-mnie.html"><span>więcej o mnie</span></a><a class="przycisk" href="#kontakt"><span>umów się na spotkanie</span></a></div></div></section></div>
+<section class="sekcja obszar">
+        <h2 class="sekcja__tytul">Jak pracuję?</h2>
+        
+        <article class="karta filar">
+          <div class="filar__godlo">
+            <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="26" cy="46" r="11"/><path d="M10 90C10 72 17 62 26 62s16 10 16 28"/><circle cx="60" cy="38" r="13"/><path d="M42 90C42 68 50 56 60 56s18 12 18 34"/><circle cx="94" cy="50" r="10"/><path d="M80 90C80 74 86 66 94 66s14 8 14 24"/></svg><span class="filar__nazwa">różnorodność</span>
+          </div>
+          <div class="proza"><p>Gabinet jest otwarty niezależnie od tożsamości płciowej, orientacji, modelu relacji, wyznania i pochodzenia. To punkt wyjścia całej mojej praktyki, nie temat do obsłużenia przy okazji.</p></div>
+        </article>
+        <article class="karta filar">
+          <div class="filar__godlo">
+            <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 76C22 46 46 40 56 58c8 14-8 26-14 14-7-14 14-28 36-22 12 3 18 8 24 14"/><path d="M102 64 89 62M102 64l-8 11"/></svg><span class="filar__nazwa">nurty</span>
+          </div>
+          <div class="proza"><p>Moja praca opiera się na podejściach o potwierdzonej skuteczności i na bieżącej literaturze naukowej. Nurty, w których pracuję, wypisz tutaj wprost — to jedna z pierwszych rzeczy, których szuka osoba szukająca terapeuty.</p></div>
+        </article>
+        <article class="karta filar">
+          <div class="filar__godlo">
+            <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 88c0-18 16-22 30-18s28 0 32-14c4-14-6-24-18-20"/><circle cx="18" cy="88" r="4.5"/><circle cx="48" cy="70" r="4.5"/><circle cx="80" cy="56" r="4.5"/><path d="M62 36V20"/><path d="M62 21l17 5-17 6"/></svg><span class="filar__nazwa">struktura</span>
+          </div>
+          <div class="proza"><p>Zaczynamy od kilku spotkań konsultacyjnych. Kiedy kierunek jest już jasny, przechodzimy do pracy nad bieżącymi trudnościami. Postępy oglądamy wspólnie i na bieżąco.</p></div>
+        </article><div class="przyciski przyciski--srodek"><a class="przycisk" href="#kontakt"><span>umów się na spotkanie</span></a></div></section>
+<section class="sekcja obszar">
+        <h2 class="sekcja__tytul">formy spotkań</h2>
+        <div class="formy formy--2">
+        <article class="karta forma">
+          <span><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M34 100c-8-18-10-50 10-66s46-6 49 16c1 6 5 7 5 9s-6 3-8 4c0 6-2 10-7 12-3 1-3 4-3 8v17"/><path d="M44 68c-7-11 7-21 16-13 7 6 1 17-8 13-7-3-4-13 6-11"/></svg></span>
+          <h3 class="forma__nazwa">terapia indywidualna</h3>
+          <p>Dla osób, które mierzą się z trudnościami życiowymi albo z problemami ze zdrowiem psychicznym, a także dla tych, które chcą wprowadzić ważną zmianę.</p>
+          <a class="przycisk" href="terapia-indywidualna.html"><span>dowiedz się więcej</span></a>
+        </article>
+        <article class="karta forma">
+          <span><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="translate(-4,2) scale(.75)"><path d="M34 100c-8-18-10-50 10-66s46-6 49 16c1 6 5 7 5 9s-6 3-8 4c0 6-2 10-7 12-3 1-3 4-3 8v17"/></g><g transform="translate(34,12) scale(.75)"><path d="M34 100c-8-18-10-50 10-66s46-6 49 16c1 6 5 7 5 9s-6 3-8 4c0 6-2 10-7 12-3 1-3 4-3 8v17" fill="var(--karta,#fff)"/></g></svg></span>
+          <h3 class="forma__nazwa">terapia partnerska/par</h3>
+          <p>Dla osób w relacji romantycznej, które chcą zadbać o jakość swojego związku albo rozwiązać powtarzające się konflikty.</p>
+          <a class="przycisk" href="terapia-partnerska.html"><span>dowiedz się więcej</span></a>
+        </article></div><div class="przyciski przyciski--srodek" style="margin-top:32px"><a class="przycisk" href="#kontakt"><span>umów się na spotkanie</span></a><a class="przycisk" href="cennik.html"><span>cennik</span></a></div></section>
+<section class="kontakt" id="kontakt"><div class="obszar">
+        <h2 class="kontakt__tytul">Kontakt</h2>
+        <div class="kontakt__siatka" style="--kol:3"><div class="kontakt__blok"><h3 class="kontakt__naglowek">Zapisy:</h3><p>kontakt@example.com</p></div><div class="kontakt__blok"><h3 class="kontakt__naglowek">Adres</h3><p>ul. Przykładowa 1</p><p>00-000 Warszawa</p><p>Polska</p></div><div class="kontakt__blok"><h3 class="kontakt__naglowek">Dostępność:</h3><table class="godziny"><tbody><tr><th scope="row"><span>Poniedziałek</span></th><td><span>09:00 – 16:00 (stacjonarnie)</span></td></tr><tr><th scope="row"><span>Wtorek</span></th><td><span>09:00 – 15:00 (online)</span></td></tr><tr><th scope="row"><span>Środa</span></th><td><span>09:00 – 15:00 (online)</span></td></tr><tr><th scope="row"><span>Czwartek</span></th><td><span>09:00 – 15:00 (online)</span></td></tr></tbody></table></div></div><div class="mapa">Mapa dojazdu — wklej kod osadzenia w panelu po prawej.</div></div></section>
+<footer class="stopka"><span>kontakt@example.com</span></footer>
 </main>
-
-<footer class="stopka">
-  <a href="mailto:kontakt@example.com">kontakt@example.com</a>
-</footer>
-
 </body>
 </html>
