@@ -66,9 +66,16 @@
     if (!p || typeof p !== "object") return null;
     if (Array.isArray(p.strony)) return p;
     if (Array.isArray(p.sekcje)) {
+      /* Wersja 1 znała tylko stronę główną, więc jej praca trafia na stronę
+         główną, a podstrony dokładamy z projektu domyślnego. Bez tego ktoś,
+         kto zaczął pracę przed dołożeniem podstron, nigdy by ich nie zobaczył
+         — jego zapis wygrywa z domyślnym i cicho je zjada. */
       return { wersja: 2, meta: p.meta || { tytul: "", opis: "" }, motyw: p.motyw,
-        strony: [{ id: "glowna", nazwa: "Strona główna", plik: "index.html",
-                   tytul: "", opis: "", sekcje: p.sekcje }] };
+        strony: [
+          { id: "glowna", nazwa: "Strona główna", plik: "index.html",
+            tytul: "", opis: "", sekcje: p.sekcje },
+          ...klon(window.KX_PROJEKT_DOMYSLNY.strony.slice(1)),
+        ] };
     }
     return null;
   }
@@ -162,6 +169,12 @@
        w blok tekstowy ma stawiać kursor, bo tekst pisze się w miejscu. */
     [data-blok]{outline:1px dashed rgba(110,168,254,.3);outline-offset:3px;position:relative}
     [data-blok].kx-wybrany{outline:2px solid #6ea8fe}
+    /* Blok pod kursorem albo wybrany wychodzi na wierzch. Bez tego blok
+       narysowany później zasłania uchwyty tego, który stoi pod nim —
+       a po przesunięciu czegokolwiek na cudze miejsce uchwyty przestawały
+       być klikalne. Warstwa bloku (z-index:1) zamyka warstwę uchwytu
+       w sobie, więc samo podniesienie uchwytu nic nie daje. */
+    [data-blok]:hover,[data-blok].kx-wybrany{z-index:5}
     /* Dwie rzeczy, bez których uchwyty kradną kliknięcia sąsiadom:
        1. pointer-events:none, dopóki są niewidoczne — element o zerowej
           przezroczystości NADAL łapie wskaźnik, więc niewidoczne kółko
@@ -284,6 +297,32 @@
 
   let gest = null;
 
+  /* Ile rzędów przebył wskaźnik. Szuka początku rzędu najbliższego nowemu
+     położeniu górnej krawędzi bloku; poniżej ostatniego znanego rzędu
+     dolicza po wysokości nominalnej. */
+  function przesuniecieWRzedach(g, przesuniecie) {
+    const poczatki = g.poczatki;
+    if (poczatki.length < 2) return Math.round(przesuniecie / g.nominalny);
+
+    const gora0 = g.y0 < poczatki.length
+      ? poczatki[g.y0]
+      : poczatki.at(-1) + (g.y0 - poczatki.length + 1) * g.nominalny;
+    const cel = gora0 + przesuniecie;
+
+    let najlepszy = 0, najmniejsza = Infinity;
+    for (let i = 0; i < poczatki.length; i++) {
+      const roznica = Math.abs(poczatki[i] - cel);
+      if (roznica < najmniejsza) { najmniejsza = roznica; najlepszy = i; }
+    }
+    /* Poniżej ostatniego rzędu siatka jeszcze nie istnieje — dokładamy
+       rzędy nominalne, żeby dało się zejść niżej, niż sięga treść. */
+    const zaOstatnim = cel - poczatki.at(-1);
+    if (zaOstatnim > g.nominalny / 2) {
+      najlepszy = poczatki.length - 1 + Math.round(zaOstatnim / g.nominalny);
+    }
+    return najlepszy - g.y0;
+  }
+
   function podepnijPrzesuwanie(d) {
     d.addEventListener("pointerdown", (e) => {
       const uchwyt = e.target.closest(".kx-uchwyt, .kx-rozciag");
@@ -307,13 +346,21 @@
       const lukaY = parseFloat(st.rowGap) || 0;
       const uzyteczna = prost.width - (parseFloat(st.paddingLeft) || 0) - (parseFloat(st.paddingRight) || 0);
 
+      /* Początki rzędów, odczytane z ułożonej siatki. Rzędy bywają różnej
+         wysokości (rosną z treścią), więc „o ile rzędów przesunął się
+         wskaźnik" trzeba liczyć z geometrii, a nie mnożeniem. */
+      const wysokosciRzedow = st.gridTemplateRows.split(" ").map(parseFloat).filter((x) => !isNaN(x));
+      const poczatki = [0];
+      for (const h of wysokosciRzedow) poczatki.push(poczatki.at(-1) + h + lukaY);
+      const nominalny = (sek.rzad || 44) + lukaY;
+
       gest = {
         rozciaganie: uchwyt.classList.contains("kx-rozciag"),
-        is, ib, blok,
+        is, ib, blok, poczatki, nominalny,
         startX: e.clientX, startY: e.clientY,
         x0: b.x, y0: b.y, w0: b.w, h0: b.h,
         krokX: (uzyteczna + lukaX) / 12,
-        krokY: (sek.rzad || 44) + lukaY,
+        krokY: nominalny,
       };
       zaznaczonyBlok = blok.dataset.blok;
       zaznaczona = blok.closest("[data-sekcja]").dataset.sekcja;
@@ -326,7 +373,7 @@
     d.addEventListener("pointermove", (e) => {
       if (!gest) return;
       const dx = Math.round((e.clientX - gest.startX) / gest.krokX);
-      const dy = Math.round((e.clientY - gest.startY) / gest.krokY);
+      const dy = przesuniecieWRzedach(gest, e.clientY - gest.startY);
       const b = strona().sekcje[gest.is].bloki[gest.ib];
 
       if (gest.rozciaganie) {
@@ -504,7 +551,7 @@
     kontakt: () => ({ typ: "kontakt", tytul: "Kontakt", mapa: true, mapaHtml: "",
       kolumny: [{ naglowek: "Zapisy:", wiersze: ["kontakt@example.com"], godziny: [] }] }),
     stopka: () => ({ typ: "stopka", tresc: "kontakt@example.com" }),
-    plotno: () => ({ typ: "plotno", odstep: "zwykly", rzad: 44, luka: 14, wysokosc: 8, bloki: [
+    plotno: () => ({ typ: "plotno", odstep: "zwykly", rzad: 44, luka: 14, wysokosc: 8, wKarcie: false, bloki: [
       { rodzaj: "naglowek", x: 0, y: 0, w: 7, h: 2, tresc: "Nagłówek", wielkosc: 2.2 },
       { rodzaj: "tekst", x: 0, y: 2, w: 7, h: 3, tresc: "Tekst do przesunięcia gdziekolwiek." },
       { rodzaj: "zdjecie", x: 8, y: 0, w: 4, h: 5, zdjecie: null, opis: "" },
@@ -597,6 +644,7 @@
     plotno: [
       { typ: "bloki", sciezka: "bloki", etykieta: "Bloki na płótnie" },
       { typ: "rozdzielacz" },
+      { typ: "przelacznik", sciezka: "wKarcie", etykieta: "Całe płótno na białej karcie" },
       { typ: "liczba", sciezka: "wysokosc", etykieta: "Wysokość płótna (rzędy)", min: 3, max: 40, krok: 1 },
       { typ: "liczba", sciezka: "rzad", etykieta: "Wysokość rzędu (px)", min: 20, max: 90, krok: 2 },
       { typ: "liczba", sciezka: "luka", etykieta: "Przerwa między blokami (px)", min: 0, max: 40, krok: 2 },
@@ -671,6 +719,20 @@
        dzieje, bo w sekcji o ustalonym układzie nie ma czego chwycić.
        Zamiast tłumaczyć to w instrukcji, mówimy o tym w miejscu, w którym
        problem powstaje — i od razu dajemy wyjście. */
+    if (s.typ !== "plotno" && !PLOTNO_MOZLIWE.has(s.typ)) {
+      /* Pasek i stopka. Milczenie w tym miejscu wygląda jak brak funkcji,
+         a nie jak decyzja. */
+      const nota = document.createElement("p");
+      nota.className = "wskazowka";
+      nota.style.cssText = "background:#26262e;border:1px solid #33333d;border-radius:8px;" +
+        "padding:10px 12px;margin:0 0 16px";
+      nota.textContent = "Ta sekcja jest obramowaniem strony — powtarza się na każdej " +
+        "podstronie, więc nie da się jej zamienić na swobodne płótno. " +
+        "Przesuwać elementy można w sekcjach z treścią: Powitanie, Filary pracy, " +
+        "Karty oferty, Kontakt.";
+      cel.append(nota);
+    }
+
     if (s.typ !== "plotno" && PLOTNO_MOZLIWE.has(s.typ)) {
       const ramka = document.createElement("div");
       ramka.style.cssText = "background:#26262e;border:1px solid #33333d;border-radius:8px;" +
@@ -1116,6 +1178,29 @@
       });
       ul.append(li);
     });
+
+    /* Zapis zrobiony zanim projekt nauczył się podstron ma tylko stronę
+       główną — i sama migracja go nie naprawi, bo po pierwszym wczytaniu
+       jest już w nowym kształcie. Dokładanie podstron po cichu, przy
+       każdym starcie, byłoby wchodzeniem komuś w projekt, więc pytamy. */
+    const brakujace = window.KX_PROJEKT_DOMYSLNY.strony
+      .slice(1)
+      .filter((wzor) => !R.projekt.strony.some((st) => st.plik === wzor.plik));
+
+    if (brakujace.length) {
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.style.cssText = "width:calc(100% - 24px);margin:2px 12px 0;font-size:11.5px";
+      b.textContent = `+ Dołóż brakujące podstrony (${brakujace.length})`;
+      b.title = brakujace.map((x) => x.nazwa).join(", ");
+      b.addEventListener("click", () => {
+        zapamietaj();
+        R.projekt.strony.push(...klon(brakujace));
+        poZmianie();
+        powiedz(`Dołożone: ${brakujace.map((x) => x.nazwa).join(", ")}.`);
+      });
+      ul.parentElement.insertBefore(b, ul.nextSibling);
+    }
   }
 
   /* ------------------------------------------- zamiana sekcji na płótno */
@@ -1127,99 +1212,201 @@
 
   const PLOTNO_MOZLIWE = new Set(["hero", "tekst", "filary", "formy", "cytat", "cta", "galeria", "cennik", "kontakt"]);
 
+  /* Wielkości pisma przepisane z układu ustalonego. Podstawa to 17 px,
+     czyli 1rem — dlatego nagłówek powitania ma 3.06, a nie „mniej więcej
+     duży". Bez tego zamiana na płótno spłaszczała typografię. */
+  const WIELKOSC = {
+    hero: 3.06, tytulSekcji: 1.76, tytulKontaktu: 2.7, cytat: 1.65,
+    nazwaFilaru: 1, nazwaOferty: 1.12, naglowekKolumny: 0.94,
+    lead: 1.06, proza: 1, drobne: 0.98,
+  };
+
   function naPlotno(s) {
     const bloki = [];
-    const dodaj = (b) => bloki.push(Object.assign({ wyrownanie: "left" }, b));
+    /* Bez domyślnego wyrównania: wpisane w styl bloku bije klasę roli,
+       więc „proza” traciła justowanie na rzecz wyrównania do lewej.
+       Brak wartości znaczy „jak w roli”, a to jest właściwe domyślne. */
+    const dodaj = (b) => bloki.push(b);
+    const panel = (x, y, w, h) => dodaj({ rodzaj: "panel", x, y, w, h });
+    let wKarcie = false;
+    let tloSekcji = s.tloSekcji;
 
     if (s.typ === "hero") {
+      /* Powitanie stało na białej karcie — karta zostaje kartą. */
+      wKarcie = true;
       const zeZdjeciem = s.pokazZdjecie !== false;
       const zdjecieLewo = s.stronaZdjecia !== "prawo";
       if (zeZdjeciem) {
-        dodaj({ rodzaj: "zdjecie", x: zdjecieLewo ? 0 : 7, y: 0, w: 5, h: 8,
-                zdjecie: s.zdjecie || null, opis: s.opisZdjecia || "" });
+        dodaj({ rodzaj: "zdjecie", x: zdjecieLewo ? 0 : 7, y: 0, w: 5, h: 9,
+                zdjecie: s.zdjecie || null, opis: s.opisZdjecia || "",
+                ksztalt: s.ksztalt || "blob" });
       }
       const kx = zeZdjeciem && zdjecieLewo ? 6 : 0;
+      const kw = zeZdjeciem ? 6 : 12;
       let y = 0;
-      dodaj({ rodzaj: "naglowek", x: kx, y, w: 6, h: 2, tresc: s.tytul || "", wielkosc: 2.6 }); y += 2;
-      if (s.lead) { dodaj({ rodzaj: "tekst", x: kx, y, w: 6, h: 2, tresc: s.lead, wielkosc: 1.05 }); y += 2; }
-      for (const a of s.akapity || []) { dodaj({ rodzaj: "tekst", x: kx, y, w: 6, h: 3, tresc: a }); y += 3; }
+      dodaj({ rodzaj: "naglowek", x: kx, y, w: kw, h: 2, tresc: s.tytul || "",
+              rola: "hero", wielkosc: WIELKOSC.hero }); y += 2;
+      if (s.lead) {
+        dodaj({ rodzaj: "tekst", x: kx, y, w: kw, h: 1, tresc: s.lead,
+                rola: "lead", wielkosc: WIELKOSC.lead }); y += 1;
+      }
+      for (const a of s.akapity || []) {
+        dodaj({ rodzaj: "tekst", x: kx, y, w: kw, h: 2, tresc: a,
+                rola: "proza", wielkosc: WIELKOSC.proza }); y += 2;
+      }
       let bx = kx;
       for (const p of s.przyciski || []) {
         dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel });
         bx += 3;
       }
 
-    } else if (s.typ === "tekst" || s.typ === "cta") {
+    } else if (s.typ === "filary") {
       let y = 0;
-      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 8, h: 2, tresc: s.tytul, wielkosc: 1.9 }); y += 2; }
-      for (const a of s.akapity || []) { dodaj({ rodzaj: "tekst", x: 0, y, w: 8, h: 3, tresc: a }); y += 3; }
-      let bx = 0;
-      for (const p of s.przyciski || []) {
-        dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel });
+      if (s.tytul) {
+        dodaj({ rodzaj: "naglowek", x: 0, y, w: 9, h: 1, tresc: s.tytul, rola: "tytul",
+                wielkosc: WIELKOSC.tytulSekcji,
+                wyrownanie: s.wyrownanieTytulu === "srodek" ? "center" : "left" });
+        y += 2;
+      }
+      /* Każdy filar miał własną białą kartę — odtwarza ją blok „panel”,
+         który leży POD treścią (niższa warstwa) i da się przesuwać razem
+         z nią albo osobno. */
+      for (const c of s.karty || []) {
+        panel(0, y, 12, 5);
+        dodaj({ rodzaj: "grafika", x: 1, y: y + 1, w: 2, h: 2, ikona: c.ikona });
+        dodaj({ rodzaj: "naglowek", x: 1, y: y + 3, w: 2, h: 1, tresc: c.nazwa,
+                rola: "nazwa", wielkosc: WIELKOSC.nazwaFilaru, wyrownanie: "center" });
+        dodaj({ rodzaj: "tekst", x: 4, y: y + 1, w: 7, h: 3, tresc: c.tekst,
+                rola: "proza", wielkosc: WIELKOSC.proza });
+        y += 6;
+      }
+      if (s.przyciskPod && s.przyciskPod.tekst) {
+        dodaj({ rodzaj: "przycisk", x: 4, y, w: 4, h: 1,
+                tresc: s.przyciskPod.tekst, cel: s.przyciskPod.cel, wyrownanie: "center" });
+      }
+
+    } else if (s.typ === "formy") {
+      let y = 0;
+      if (s.tytul) {
+        dodaj({ rodzaj: "naglowek", x: 0, y, w: 9, h: 1, tresc: s.tytul, rola: "tytul",
+                wielkosc: WIELKOSC.tytulSekcji,
+                wyrownanie: s.wyrownanieTytulu === "srodek" ? "center" : "left" });
+        y += 2;
+      }
+      const ile = Math.max(1, s.kolumny || 2);
+      const szer = Math.floor(12 / ile);
+      (s.karty || []).forEach((c, i) => {
+        const kol = (i % ile) * szer;
+        const baza = y + Math.floor(i / ile) * 9;
+        panel(kol, baza, szer, 8);
+        dodaj({ rodzaj: "grafika", x: kol + 1, y: baza + 1, w: szer - 2, h: 2, ikona: c.ikona });
+        dodaj({ rodzaj: "naglowek", x: kol + 1, y: baza + 3, w: szer - 2, h: 1, tresc: c.nazwa,
+                rola: "nazwa", wielkosc: WIELKOSC.nazwaOferty, wyrownanie: "center" });
+        dodaj({ rodzaj: "tekst", x: kol + 1, y: baza + 4, w: szer - 2, h: 2, tresc: c.tekst,
+                wielkosc: WIELKOSC.drobne, wyrownanie: "center" });
+        if (c.przycisk && c.przycisk.tekst) {
+          dodaj({ rodzaj: "przycisk", x: kol + 1, y: baza + 6, w: szer - 2, h: 1,
+                  tresc: c.przycisk.tekst, cel: c.przycisk.cel, wyrownanie: "center" });
+        }
+      });
+      y += Math.ceil((s.karty || []).length / ile) * 9;
+      let bx = 4;
+      for (const p of s.przyciskiPod || []) {
+        dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel,
+                wyrownanie: "center" });
         bx += 3;
       }
 
-    } else if (s.typ === "filary" || s.typ === "formy") {
+    } else if (s.typ === "tekst") {
+      wKarcie = !!s.wKarcie;
+      const kw = Math.max(6, Math.min(12, Math.round((s.szerokoscTekstu || 68) / 9)));
       let y = 0;
-      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 8, h: 2, tresc: s.tytul, wielkosc: 1.9 }); y += 2; }
-      const karty = s.karty || [];
-      /* Karty w rzędzie, tyle kolumn, ile się mieści: dwanaście dzielone
-         przez liczbę kart, ale nie węziej niż trzy kolumny. */
-      const szer = Math.max(3, Math.floor(12 / Math.max(1, Math.min(karty.length, 4))));
-      karty.forEach((c, i) => {
-        const wRzedzie = Math.floor(12 / szer);
-        const kol = (i % wRzedzie) * szer;
-        const rzad = y + Math.floor(i / wRzedzie) * 9;
-        dodaj({ rodzaj: "grafika", x: kol, y: rzad, w: Math.min(3, szer), h: 3, ikona: c.ikona });
-        dodaj({ rodzaj: "naglowek", x: kol, y: rzad + 3, w: szer, h: 1, tresc: c.nazwa, wielkosc: 1.15 });
-        dodaj({ rodzaj: "tekst", x: kol, y: rzad + 4, w: szer, h: 4, tresc: c.tekst });
-        if (c.przycisk && c.przycisk.tekst)
-          dodaj({ rodzaj: "przycisk", x: kol, y: rzad + 8, w: Math.min(4, szer), h: 1,
-                  tresc: c.przycisk.tekst, cel: c.przycisk.cel });
-      });
-      y += Math.ceil(karty.length / Math.max(1, Math.floor(12 / szer))) * 9;
-      let bx = 0;
-      for (const p of [...(s.przyciskiPod || []), ...(s.przyciskPod && s.przyciskPod.tekst ? [s.przyciskPod] : [])]) {
-        dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel });
-        bx += 3;
+      if (s.tytul) {
+        dodaj({ rodzaj: "naglowek", x: 0, y, w: kw, h: 1, tresc: s.tytul, rola: "tytul",
+                wielkosc: WIELKOSC.tytulSekcji,
+                wyrownanie: s.wyrownanieTytulu === "srodek" ? "center" : "left" });
+        y += 2;
+      }
+      for (const a of s.akapity || []) {
+        dodaj({ rodzaj: "tekst", x: 0, y, w: kw, h: 2, tresc: a,
+                rola: s.wyrownanie === "lewo" ? "" : "proza", wielkosc: WIELKOSC.proza });
+        y += 2;
       }
 
     } else if (s.typ === "cytat") {
-      dodaj({ rodzaj: "naglowek", x: 2, y: 0, w: 8, h: 3, tresc: s.tresc || "", wielkosc: 1.7, wyrownanie: "center" });
-      if (s.autor) dodaj({ rodzaj: "tekst", x: 2, y: 3, w: 8, h: 1, tresc: s.autor, wyrownanie: "center" });
+      dodaj({ rodzaj: "naglowek", x: 2, y: 0, w: 8, h: 2, tresc: s.tresc || "",
+              rola: "lekki", wielkosc: WIELKOSC.cytat, wyrownanie: "center" });
+      if (s.autor) {
+        dodaj({ rodzaj: "tekst", x: 2, y: 2, w: 8, h: 1, tresc: s.autor,
+                wielkosc: WIELKOSC.drobne, wyrownanie: "center" });
+      }
+
+    } else if (s.typ === "cta") {
+      let y = 0;
+      if (s.tytul) {
+        dodaj({ rodzaj: "naglowek", x: 0, y, w: 12, h: 1, tresc: s.tytul, rola: "tytul",
+                wielkosc: WIELKOSC.tytulSekcji, wyrownanie: "center" });
+        y += 2;
+      }
+      const ile = (s.przyciski || []).length;
+      let bx = Math.max(0, Math.floor((12 - ile * 3) / 2));
+      for (const p of s.przyciski || []) {
+        dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel,
+                wyrownanie: "center" });
+        bx += 3;
+      }
 
     } else if (s.typ === "galeria") {
       let y = 0;
-      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 8, h: 2, tresc: s.tytul, wielkosc: 1.9 }); y += 2; }
-      const kol = s.kolumny || 3;
-      const szer = Math.floor(12 / kol);
+      if (s.tytul) {
+        dodaj({ rodzaj: "naglowek", x: 0, y, w: 9, h: 1, tresc: s.tytul, rola: "tytul",
+                wielkosc: WIELKOSC.tytulSekcji }); y += 2;
+      }
+      const ile = s.kolumny || 3;
+      const szer = Math.floor(12 / ile);
       (s.zdjecia || []).forEach((z, i) => {
-        dodaj({ rodzaj: "zdjecie", x: (i % kol) * szer, y: y + Math.floor(i / kol) * 5,
-                w: szer, h: 5, zdjecie: z, opis: "" });
+        dodaj({ rodzaj: "zdjecie", x: (i % ile) * szer, y: y + Math.floor(i / ile) * 5,
+                w: szer, h: 5, zdjecie: z, opis: "", ksztalt: "prostokat" });
       });
 
     } else if (s.typ === "cennik") {
       let y = 0;
-      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 12, h: 2, tresc: s.tytul, wielkosc: 1.9, wyrownanie: "center" }); y += 2; }
+      if (s.tytul) {
+        dodaj({ rodzaj: "naglowek", x: 0, y, w: 12, h: 1, tresc: s.tytul, rola: "tytul",
+                wielkosc: WIELKOSC.tytulSekcji,
+                wyrownanie: s.wyrownanieTytulu === "srodek" ? "center" : "left" });
+        y += 2;
+      }
       for (const p of s.pozycje || []) {
-        dodaj({ rodzaj: "tekst", x: 1, y, w: 7, h: 1, tresc: p.nazwa });
-        dodaj({ rodzaj: "tekst", x: 8, y, w: 3, h: 1, tresc: p.kwota, wyrownanie: "right" });
+        dodaj({ rodzaj: "tekst", x: 2, y, w: 6, h: 1, tresc: p.nazwa, wielkosc: WIELKOSC.proza });
+        dodaj({ rodzaj: "naglowek", x: 8, y, w: 2, h: 1, tresc: p.kwota,
+                rola: "nazwa", wielkosc: 0.88, wyrownanie: "right" });
         y += 1;
       }
-      for (const u of s.uwagi || []) { dodaj({ rodzaj: "tekst", x: 1, y, w: 10, h: 2, tresc: u }); y += 2; }
+      y += 1;
+      for (const u of s.uwagi || []) {
+        dodaj({ rodzaj: "tekst", x: 2, y, w: 8, h: 2, tresc: u,
+                rola: "proza", wielkosc: WIELKOSC.drobne, kolorTekstu: MOTYW().miekki });
+        y += 2;
+      }
 
     } else if (s.typ === "kontakt") {
+      /* Kontakt stał na własnym pasie tła — pas zostaje. */
+      tloSekcji = tloSekcji || MOTYW().pasKontakt;
       let y = 0;
-      dodaj({ rodzaj: "naglowek", x: 0, y, w: 12, h: 2, tresc: s.tytul || "", wielkosc: 2.2, wyrownanie: "center" });
-      y += 2;
+      dodaj({ rodzaj: "naglowek", x: 0, y, w: 12, h: 2, tresc: s.tytul || "",
+              rola: "lekki", wielkosc: WIELKOSC.tytulKontaktu, wyrownanie: "center" });
+      y += 3;
       const kolumny = s.kolumny || [];
       const szer = Math.max(3, Math.floor(12 / Math.max(1, kolumny.length)));
       kolumny.forEach((c, i) => {
         const kol = i * szer;
-        dodaj({ rodzaj: "naglowek", x: kol, y, w: szer, h: 1, tresc: c.naglowek, wielkosc: 1.1 });
+        dodaj({ rodzaj: "naglowek", x: kol, y, w: szer, h: 1, tresc: c.naglowek,
+                rola: "nazwa", wielkosc: WIELKOSC.naglowekKolumny });
         const linie = [...(c.wiersze || []), ...(c.godziny || []).map((g) => `${g.dzien} — ${g.zakres}`)]
           .filter((w) => String(w).trim());
-        linie.forEach((w, n) => dodaj({ rodzaj: "tekst", x: kol, y: y + 1 + n, w: szer, h: 1, tresc: w }));
+        linie.forEach((w, n) => dodaj({ rodzaj: "tekst", x: kol, y: y + 1 + n, w: szer, h: 1,
+                                        tresc: w, wielkosc: WIELKOSC.drobne }));
       });
     }
 
@@ -1227,17 +1414,19 @@
 
     return {
       id: nowyId(), typ: "plotno", widoczna: s.widoczna !== false,
-      odstep: s.odstep || "zwykly", rzad: 44, luka: 14,
+      odstep: s.odstep || "zwykly", rzad: 44, luka: 14, wKarcie,
       wysokosc: Math.max(6, ...bloki.map((b) => b.y + b.h)),
       bloki,
-      ...(s.tloSekcji ? { tloSekcji: s.tloSekcji } : {}),
+      ...(tloSekcji ? { tloSekcji } : {}),
     };
   }
+
+  const MOTYW = () => R.projekt.motyw.kolory;
 
   /* --------------------------------------------------------- bloki płótna */
   const RODZAJE_BLOKU = {
     naglowek: "Nagłówek", tekst: "Tekst", zdjecie: "Miejsce na zdjęcie",
-    grafika: "Grafika", przycisk: "Przycisk",
+    grafika: "Grafika", przycisk: "Przycisk", panel: "Panel (tło karty)",
   };
 
   function nowyBlok(rodzaj) {
@@ -1246,6 +1435,7 @@
     if (rodzaj === "tekst") return { ...wspolne, h: 3, tresc: "Nowy tekst.", wielkosc: 1 };
     if (rodzaj === "zdjecie") return { ...wspolne, w: 4, h: 5, zdjecie: null, opis: "" };
     if (rodzaj === "grafika") return { ...wspolne, w: 3, h: 3, ikona: "serce" };
+    if (rodzaj === "panel") return { ...wspolne, w: 12, h: 5 };
     return { ...wspolne, w: 4, h: 1, tresc: "nowy przycisk", cel: "#" };
   }
 
@@ -1309,6 +1499,13 @@
         });
         rzad.append(wgraj, usun);
         li.append(rzad);
+      } else if (b.rodzaj === "panel") {
+        const nota = document.createElement("p");
+        nota.className = "wskazowka";
+        nota.style.margin = "0";
+        nota.textContent = "Biała karta pod treścią. Leży w niższej warstwie, " +
+          "więc teksty i grafiki rysują się na niej. Kolor ustawiasz niżej.";
+        li.append(nota);
       } else if (b.rodzaj === "grafika") {
         const wybierz = document.createElement("button");
         wybierz.className = "btn";
@@ -1396,7 +1593,7 @@
       dolne.append(kolorT, kolorB, czysc);
       li.append(dolne);
 
-      if (b.rodzaj === "naglowek" || b.rodzaj === "tekst") {
+      if ((b.rodzaj === "naglowek" || b.rodzaj === "tekst") && b.rodzaj !== "panel") {
         const rozmiar = document.createElement("input");
         rozmiar.type = "range"; rozmiar.min = "0.8"; rozmiar.max = "4"; rozmiar.step = "0.1";
         rozmiar.value = b.wielkosc || 1;
@@ -1611,6 +1808,39 @@
 
   function nowyId() { return "s-" + Math.random().toString(36).slice(2, 9); }
 
+  /* Podgląd „Pulpit" ma pokazywać PULPIT, a nie to, co się akurat mieści
+     między panelami. Na laptopie zostaje tam około 850 px, czyli mniej niż
+     próg 900 px — i strona składała się jak na tablecie, choć przycisk
+     mówił „Pulpit". Ramka dostaje więc pełne 1280 px i jest pomniejszana
+     przekształceniem, żeby zmieścić się na ekranie.
+
+     Przeciąganiu to nie przeszkadza: zdarzenia wskaźnika wewnątrz ramki są
+     liczone w JEJ układzie współrzędnych, którego przekształcenie rodzica
+     nie dotyczy. */
+  const SZEROKOSC_PULPITU = 1280;
+
+  function dopasujSkale() {
+    const scena = $("#scena");
+    const pudlo = $(".ramka-pud");
+    if (scena.dataset.widok !== "pulpit") {
+      pudlo.style.transform = "";
+      pudlo.style.transformOrigin = "";
+      pudlo.style.width = "";
+      pudlo.style.height = "";
+      return;
+    }
+    const styl = getComputedStyle(scena);
+    const dostepna = scena.clientWidth - parseFloat(styl.paddingLeft) - parseFloat(styl.paddingRight);
+    const dostepnaWys = scena.clientHeight - parseFloat(styl.paddingTop) - parseFloat(styl.paddingBottom);
+    const skala = Math.min(1, dostepna / SZEROKOSC_PULPITU);
+    pudlo.style.width = SZEROKOSC_PULPITU + "px";
+    /* Przekształcenie nie zmienia miejsca zajmowanego w układzie, więc
+       wysokość dzielimy przez skalę — po pomniejszeniu wypełni scenę. */
+    pudlo.style.height = (dostepnaWys / skala) + "px";
+    pudlo.style.transformOrigin = "top center";
+    pudlo.style.transform = "scale(" + skala + ")";
+  }
+
   /* --------------------------------------------------------- start */
   function podepnijZdarzenia() {
     $("#cofnij").addEventListener("click", R.cofnij);
@@ -1627,7 +1857,9 @@
     $$(".grupa [data-widok]").forEach((b) => b.addEventListener("click", () => {
       $$(".grupa [data-widok]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
       $("#scena").dataset.widok = b.dataset.widok;
+      dopasujSkale();
     }));
+    addEventListener("resize", dopasujSkale);
 
     $$(".zakladki [data-zakladka]").forEach((b) => b.addEventListener("click", () => {
       $$(".zakladki [data-zakladka]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
@@ -1778,5 +2010,6 @@
     }
     podepnijZdarzenia();
     poZmianie();
+    dopasujSkale();
   })();
 })();

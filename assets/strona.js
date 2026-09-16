@@ -155,8 +155,12 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
 /* Swobodne płótno: dwanaście kolumn, rzędy o stałej wysokości.
    Bloki stawia się na siatce, więc da się je przesuwać myszą, a mimo to
    układ nie rozsypie się przy innej szerokości okna. */
+/* grid-auto-rows z minmax, a nie stała wysokość: rząd ma być NAJMNIEJSZY,
+   nie sztywny. Przy sztywnym dłuższy akapit wychodził poza swój blok
+   i nachodził na sąsiada — a przy zamianie sekcji na płótno akapity
+   są dokładnie tak długie, jak je ktoś napisał. */
 .plotno{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--luka,14px);
-  grid-auto-rows:var(--rzad,44px);max-width:var(--szer);margin:0 auto;padding:0 24px}
+  grid-auto-rows:minmax(var(--rzad,44px),auto);max-width:var(--szer);margin:0 auto;padding:0 24px}
 .plotno-blok{min-width:0;display:flex;flex-direction:column;justify-content:center;overflow-wrap:anywhere}
 .plotno-blok--naglowek{font-family:var(--naglowki);font-weight:700;letter-spacing:-.01em;line-height:1.1}
 .plotno-blok--tekst{line-height:1.6}
@@ -165,7 +169,27 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
 .plotno-blok--grafika{align-items:center}
 .plotno-blok--grafika svg{width:100%;height:100%;max-height:100%}
 .plotno-blok--przycisk{align-items:flex-start;justify-content:center}
-.plotno-puste{background:var(--akcent);border-radius:var(--promien);display:flex;
+/* Bloki płótna niosą ROLĘ — czyli to, czym były w sekcji o ustalonym
+   układzie. Dzięki temu zamiana sekcji na płótno zmienia sposób edycji,
+   a nie wygląd: nagłówek zostaje nagłówkiem, proza prozą, portret
+   portretem. Bez tego przejście na płótno spłaszczało typografię. */
+.plotno-blok{position:relative;z-index:1}
+.plotno-blok--panel{z-index:0;border-radius:var(--promien);box-shadow:0 1px 2px rgba(20,19,15,.06)}
+.plotno--wKarcie{max-width:none;padding:0}
+.rola-hero{font-family:var(--naglowki);font-weight:700;letter-spacing:-.02em;line-height:1.05}
+.rola-tytul{font-family:var(--naglowki);font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.rola-nazwa{font-family:var(--naglowki);font-weight:600;line-height:1.3}
+.rola-lekki{font-family:var(--naglowki);font-weight:400;line-height:1.3}
+.rola-lead{line-height:1.5}
+.rola-proza{text-align:justify;hyphens:auto;line-height:1.7}
+.plotno-blok--zdjecie.na-akcencie{background:var(--akcent);overflow:hidden}
+.plotno-blok--zdjecie.na-akcencie img,.plotno-blok--zdjecie.na-akcencie svg{border-radius:inherit}
+/* border-radius:inherit, a nie własny: zastępcze wypełnienie leży
+   WEWNĄTRZ bloku, który ma kształt (blob, koło, łuk). Z własnym
+   zaokrągleniem rysowało beżowy prostokąt na wierzchu i kasowało
+   kształt portretu — miary tego nie łapały, bo kształt na bloku był
+   poprawny, zasłaniało go dziecko. */
+.plotno-puste{background:var(--akcent);border-radius:inherit;display:flex;
   align-items:center;justify-content:center;width:100%;height:100%;
   font-family:var(--naglowki);font-size:13px;color:var(--miekki);text-align:center;padding:12px}
 
@@ -197,6 +221,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
   .plotno-blok{grid-column:auto !important;grid-row:auto !important;min-height:var(--min-tel,auto)}
 }
 @media (max-width:620px){
+  .rola-proza{text-align:left}
   body{font-size:${(16 * (m.skala || 1)).toFixed(1)}px}
   .formy--2,.formy--3{grid-template-columns:1fr}
   .galeria--2,.galeria--3,.galeria--4{grid-template-columns:1fr}
@@ -346,8 +371,13 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
           b.kolorTekstu ? "color:" + b.kolorTekstu : "",
           b.kolorTla ? "background:" + b.kolorTla + ";padding:14px;border-radius:var(--promien)" : "",
           b.wyrownanie ? "text-align:" + b.wyrownanie : "",
+          b.rodzaj === "panel" ? "background:" + (b.kolorTla || "var(--karta)") : "",
+          /* em, nie rem: rem liczy się od korzenia dokumentu (16 px),
+             a wielkości przepisane z układu ustalonego odnoszą się do
+             tekstu strony (17 px razy skala motywu). Na rem nagłówek
+             powitania wychodził 49 px zamiast 52. */
           (b.rodzaj === "naglowek" || b.rodzaj === "tekst") && b.wielkosc
-            ? "font-size:" + Number(b.wielkosc).toFixed(2) + "rem" : "",
+            ? "font-size:" + Number(b.wielkosc).toFixed(3) + "em" : "",
         ].filter(Boolean).join(";");
 
         let wnetrze;
@@ -357,6 +387,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
             : '<div class="plotno-puste">miejsce na zdjęcie</div>';
         } else if (b.rodzaj === "grafika") {
           wnetrze = ikona(b.ikona) || '<div class="plotno-puste">miejsce na grafikę</div>';
+        } else if (b.rodzaj === "panel") {
+          wnetrze = "";
         } else if (b.rodzaj === "przycisk") {
           wnetrze = '<a class="przycisk" href="' + esc(b.cel || "#") + '">' +
                     pole(b.tresc, "sekcje." + i + ".bloki." + j + ".tresc", t) + "</a>";
@@ -370,13 +402,22 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--tekst);outline-offs
           (b.rodzaj === "grafika"
             ? ' data-gniazdo="ikona" data-sciezka="sekcje.' + i + ".bloki." + j + '.ikona"' : ""));
 
-        return '<div class="plotno-blok plotno-blok--' + esc(b.rodzaj) + '" style="' + styl + '"' + zaczepy + ">" +
+        const klasy = ["plotno-blok", "plotno-blok--" + esc(b.rodzaj)];
+        if (b.rola) klasy.push("rola-" + esc(b.rola));
+        if (b.rodzaj === "zdjecie" && b.ksztalt) klasy.push("ksztalt-" + esc(b.ksztalt), "na-akcencie");
+        return '<div class="' + klasy.join(" ") + '" style="' + styl + '"' + zaczepy + ">" +
                wnetrze + "</div>";
       }).join("");
 
-      return '<section class="sekcja' + ODSTEP[s.odstep || "zwykly"] + '">' +
-        '<div class="plotno" style="--rzad:' + (s.rzad || 44) + "px;--luka:" + (s.luka ?? 14) +
-        "px;min-height:" + ((s.wysokosc || 10) * (s.rzad || 44)) + 'px">' + bloki + "</div></section>";
+      const siatka = '<div class="plotno' + (s.wKarcie ? " plotno--wKarcie" : "") +
+        '" style="--rzad:' + (s.rzad || 44) + "px;--luka:" + (s.luka ?? 14) +
+        "px;min-height:" + ((s.wysokosc || 10) * (s.rzad || 44)) + 'px">' + bloki + "</div>";
+      /* wKarcie odtwarza białą kartę, na której stały powitanie i bloki
+         tekstu — bez niej zamiana na płótno gubiła połowę wyglądu. */
+      const tresc = s.wKarcie
+        ? '<div class="obszar"><div class="karta" style="padding:clamp(28px,4vw,56px)">' + siatka + "</div></div>"
+        : siatka;
+      return '<section class="sekcja' + ODSTEP[s.odstep || "zwykly"] + '">' + tresc + "</section>";
     },
 
     cennik(s, i, t) {

@@ -61,8 +61,18 @@ wystrzeloną naraz).
 **Zwykłe sekcje mają układ ustalony i nic się w nich nie przesuwa.** To nie
 usterka: powitanie, filary i karty oferty mają wyglądać tak samo za każdym
 razem. Kiedy chcesz elementy poprzestawiać, zaznacz sekcję i kliknij
-**Zamień na swobodne płótno** — cała jej treść rozkłada się wtedy na bloki
-z uchwytami, ustawione podobnie do układu, z którego pochodzi.
+**Zamień na swobodne płótno**.
+
+Zamiana **zachowuje wygląd**, a nie tylko treść: biała karta zostaje kartą,
+portret zostaje w swoim kształcie, nagłówek zachowuje krój, wielkość
+i grubość, proza zostaje justowana, a pas tła pod kontaktem zostaje pasem.
+Odtwarza je blok „panel" (biała karta pod treścią, w niższej warstwie)
+oraz **rola** bloku — zapisana w nim informacja o tym, czym był w układzie
+ustalonym. Zamiana zmienia więc sposób edycji, nie wygląd.
+
+Dwie rzeczy, których nie da się przenieść co do piksela: odstępy pionowe
+wynikają z siatki, a nie z przepływu tekstu, więc bywają o kilka pikseli
+inne; portret dostaje proporcje z siatki zamiast stałego stosunku boków.
 
 Sekcja **Swobodne płótno** trzyma bloki, które przesuwa się myszą: nagłówki,
 teksty, miejsca na zdjęcia, grafiki i przyciski. Każdy ma własny kolor pisma,
