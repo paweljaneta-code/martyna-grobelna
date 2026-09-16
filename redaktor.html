@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redaktor strony</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/fonty.css">
+<style>
+/* ==========================================================================
+   Obudowa redaktora. Te style dotyczą WYŁĄCZNIE interfejsu narzędzia —
+   strona składana przez użytkownika żyje w ramce i ma własne style
+   z assets/strona.js. Dzięki temu nic się tu nie miesza.
+   ========================================================================== */
+:root{
+  --ui-tlo:#16161a; --ui-panel:#1e1e24; --ui-panel2:#26262e; --ui-kreska:#33333d;
+  --ui-tekst:#e8e8ea; --ui-miekki:#9a9aa6; --ui-akcent:#6ea8fe; --ui-ostrzezenie:#f0b429;
+  --ui-font:"Inter", system-ui, sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--ui-tlo);color:var(--ui-tekst);font-family:var(--ui-font);font-size:13px}
+
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* ---------- pasek narzędzi ---------- */
+.narzedzia{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--ui-panel);
+  border-bottom:1px solid var(--ui-kreska);flex:0 0 auto;flex-wrap:wrap}
+.marka{font-weight:700;letter-spacing:-.01em;margin-right:6px}
+.marka span{color:var(--ui-miekki);font-weight:400}
+.rozpychacz{flex:1 1 auto}
+.btn{background:var(--ui-panel2);border:1px solid var(--ui-kreska);border-radius:7px;
+  padding:7px 12px;color:var(--ui-tekst);white-space:nowrap}
+.btn:hover:not(:disabled){background:#32323c;border-color:#45454f}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn--glowny{background:var(--ui-akcent);border-color:var(--ui-akcent);color:#0c1220;font-weight:600}
+.btn--glowny:hover:not(:disabled){background:#8bbaff;border-color:#8bbaff}
+.btn--cichy{background:transparent}
+.grupa{display:flex;background:var(--ui-panel2);border:1px solid var(--ui-kreska);border-radius:7px;overflow:hidden}
+.grupa button{background:transparent;border:0;padding:7px 11px;color:var(--ui-miekki)}
+.grupa button[aria-pressed="true"]{background:var(--ui-akcent);color:#0c1220;font-weight:600}
+
+/* ---------- układ trzech kolumn ---------- */
+.plansza{flex:1 1 auto;display:grid;grid-template-columns:232px minmax(0,1fr) 312px;min-height:0}
+.panel{background:var(--ui-panel);overflow-y:auto;min-height:0}
+.panel--lewy{border-right:1px solid var(--ui-kreska)}
+.panel--prawy{border-left:1px solid var(--ui-kreska)}
+.panel h2{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ui-miekki);
+  margin:0;padding:14px 14px 8px;position:sticky;top:0;background:var(--ui-panel);z-index:2}
+
+/* ---------- lista sekcji ---------- */
+.sekcje{list-style:none;margin:0;padding:0 8px 8px}
+.sekcje li{display:flex;align-items:center;gap:6px;padding:8px 8px;border-radius:7px;
+  border:1px solid transparent;margin-bottom:3px;cursor:pointer}
+.sekcje li:hover{background:var(--ui-panel2)}
+.sekcje li[aria-selected="true"]{background:#2b3a55;border-color:var(--ui-akcent)}
+.sekcje li.przeciagana{opacity:.4}
+.sekcje li.nad{border-top:2px solid var(--ui-akcent)}
+.uchwyt{cursor:grab;color:var(--ui-miekki);flex:0 0 auto;line-height:1;font-size:15px}
+.nazwa-sekcji{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sekcje li.ukryta .nazwa-sekcji{opacity:.4;text-decoration:line-through}
+.mini{background:transparent;border:0;color:var(--ui-miekki);padding:2px 4px;border-radius:4px;flex:0 0 auto}
+.mini:hover{background:#3a3a46;color:var(--ui-tekst)}
+
+/* ---------- podgląd ---------- */
+/* align-items:stretch, a nie flex-start: ramka musi mieć się o co oprzeć,
+   inaczej iframe{height:100%} liczy się od rodzica o wysokości auto
+   i zapada się do kilkudziesięciu pikseli. Przewija się sama strona
+   w ramce — tak samo jak u odwiedzającego. */
+.scena{display:flex;align-items:stretch;justify-content:center;overflow:hidden;padding:18px;
+  background:#0f0f12;min-height:0}
+.ramka-pud{background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.5);transition:width .18s ease;height:100%}
+iframe{width:100%;border:0;display:block;height:100%}
+.scena[data-widok="telefon"] .ramka-pud{width:390px;border-radius:14px;overflow:hidden}
+.scena[data-widok="tablet"] .ramka-pud{width:768px}
+.scena[data-widok="pulpit"] .ramka-pud{width:100%;max-width:1280px}
+
+/* ---------- panel ustawień ---------- */
+.zakladki{display:flex;gap:2px;padding:10px 10px 0;position:sticky;top:0;background:var(--ui-panel);z-index:3}
+.zakladki button{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;
+  padding:8px 4px;color:var(--ui-miekki);font-weight:500}
+.zakladki button[aria-selected="true"]{color:var(--ui-tekst);border-bottom-color:var(--ui-akcent)}
+.tresc-panelu{padding:12px 14px 40px}
+.pole{margin-bottom:14px}
+.pole > label{display:block;font-size:11px;color:var(--ui-miekki);margin-bottom:5px;
+  letter-spacing:.03em;text-transform:uppercase}
+.pole input[type=text],.pole input[type=number],.pole select,.pole textarea{
+  width:100%;background:var(--ui-panel2);border:1px solid var(--ui-kreska);border-radius:6px;padding:7px 9px}
+.pole textarea{min-height:76px;resize:vertical;line-height:1.5}
+.pole input[type=color]{width:100%;height:32px;background:var(--ui-panel2);
+  border:1px solid var(--ui-kreska);border-radius:6px;padding:2px;cursor:pointer}
+.przel{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.przel input{width:16px;height:16px;accent-color:var(--ui-akcent)}
+.przel label{text-transform:none;font-size:13px;color:var(--ui-tekst);letter-spacing:0;margin:0}
+.rzad{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.karty{list-style:none;margin:0 0 10px;padding:0}
+.karty li{background:var(--ui-panel2);border:1px solid var(--ui-kreska);border-radius:7px;
+  padding:8px;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.karty li.przeciagana{opacity:.4}
+.karty li.nad{border-top:2px solid var(--ui-akcent)}
+.karty .etykieta{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podglad-ikony{width:26px;height:26px;flex:0 0 auto;color:var(--ui-tekst)}
+.podglad-ikony svg{width:100%;height:100%}
+.wskazowka{font-size:11px;color:var(--ui-miekki);line-height:1.5;margin:-6px 0 14px}
+.pusty{color:var(--ui-miekki);padding:20px 14px;line-height:1.6}
+.miniatura{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:6px;background:var(--ui-panel2);margin-bottom:7px}
+hr{border:0;border-top:1px solid var(--ui-kreska);margin:18px 0}
+
+/* ---------- okno wyboru grafiki ---------- */
+.zaslona{position:fixed;inset:0;background:rgba(0,0,0,.66);display:none;z-index:200;
+  align-items:center;justify-content:center;padding:24px}
+.zaslona[open]{display:flex}
+.okno{background:var(--ui-panel);border:1px solid var(--ui-kreska);border-radius:12px;
+  width:min(920px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+.okno header{display:flex;gap:10px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--ui-kreska)}
+.okno header strong{flex:0 0 auto}
+.okno header input{flex:1 1 auto;background:var(--ui-panel2);border:1px solid var(--ui-kreska);
+  border-radius:6px;padding:7px 10px}
+.okno .ciało{overflow-y:auto;padding:14px 16px 20px}
+.okno h3{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ui-miekki);margin:16px 0 8px}
+.okno h3:first-child{margin-top:0}
+.siatka-ikon{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.siatka-ikon button{background:var(--ui-panel2);border:1px solid var(--ui-kreska);border-radius:8px;
+  padding:9px 5px;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--ui-tekst)}
+.siatka-ikon button:hover{border-color:var(--ui-akcent);background:#2b3a55}
+.siatka-ikon button[aria-pressed="true"]{border-color:var(--ui-akcent);background:#2b3a55}
+.siatka-ikon svg{width:40px;height:40px}
+.siatka-ikon span{font-size:9.5px;color:var(--ui-miekki);text-align:center;line-height:1.25}
+
+.komunikat{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ui-panel2);
+  border:1px solid var(--ui-kreska);border-radius:8px;padding:10px 18px;z-index:300;
+  opacity:0;pointer-events:none;transition:opacity .2s ease}
+.komunikat.widoczny{opacity:1}
+
+@media (max-width:1080px){
+  .plansza{grid-template-columns:200px minmax(0,1fr) 280px}
+}
+@media (max-width:860px){
+  .plansza{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+  .panel{max-height:30vh}
+}
+</style>
+</head>
+<body>
+
+<div class="narzedzia">
+  <span class="marka">Redaktor <span>strony</span></span>
+
+  <button class="btn btn--cichy" id="cofnij" title="Cofnij (Ctrl+Z)" disabled>↶</button>
+  <button class="btn btn--cichy" id="ponow" title="Ponów (Ctrl+Shift+Z)" disabled>↷</button>
+
+  <div class="grupa" role="group" aria-label="Szerokość podglądu">
+    <button data-widok="telefon" aria-pressed="false">Telefon</button>
+    <button data-widok="tablet" aria-pressed="false">Tablet</button>
+    <button data-widok="pulpit" aria-pressed="true">Pulpit</button>
+  </div>
+
+  <span class="rozpychacz"></span>
+
+  <button class="btn" id="odNowa">Zacznij od nowa</button>
+  <button class="btn" id="wczytaj">Wczytaj projekt…</button>
+  <button class="btn" id="pobierzStrone">Pobierz stronę</button>
+  <button class="btn btn--glowny" id="pobierzProjekt">Pobierz projekt</button>
+  <input type="file" id="plikProjektu" accept="application/json,.json" hidden>
+</div>
+
+<div class="plansza">
+
+  <aside class="panel panel--lewy">
+    <h2>Sekcje strony</h2>
+    <ul class="sekcje" id="listaSekcji"></ul>
+    <div style="padding:0 12px 16px">
+      <select id="nowaSekcja" style="width:100%;background:var(--ui-panel2);border:1px solid var(--ui-kreska);border-radius:6px;padding:7px 9px">
+        <option value="">+ Dodaj sekcję…</option>
+      </select>
+      <p class="wskazowka" style="margin-top:10px">
+        Przeciągnij za uchwyt <strong>⠿</strong>, żeby zmienić kolejność.
+        Oko ukrywa sekcję bez kasowania.
+      </p>
+    </div>
+  </aside>
+
+  <main class="scena" id="scena" data-widok="pulpit">
+    <div class="ramka-pud"><iframe id="ramka" title="Podgląd strony"></iframe></div>
+  </main>
+
+  <aside class="panel panel--prawy">
+    <div class="zakladki" role="tablist">
+      <button role="tab" data-zakladka="element" aria-selected="true">Element</button>
+      <button role="tab" data-zakladka="motyw" aria-selected="false">Motyw</button>
+    </div>
+    <div class="tresc-panelu" id="panelElement"></div>
+    <div class="tresc-panelu" id="panelMotyw" hidden></div>
+  </aside>
+
+</div>
+
+<div class="zaslona" id="oknoIkon">
+  <div class="okno" role="dialog" aria-modal="true" aria-label="Wybierz grafikę">
+    <header>
+      <strong>Grafiki</strong>
+      <input type="search" id="szukajIkony" placeholder="Szukaj po nazwie…" autocomplete="off">
+      <button class="btn" id="zamknijIkony">Zamknij</button>
+    </header>
+    <div class="ciało" id="cialoIkon"></div>
+  </div>
+</div>
+
+<div class="komunikat" id="komunikat"></div>
+
+<script src="assets/ikony.js"></script>
+<script src="assets/kroje.js"></script>
+<script src="assets/strona.js"></script>
+<script src="assets/projekt-domyslny.js"></script>
+<script src="assets/redaktor.js"></script>
+</body>
+</html>
