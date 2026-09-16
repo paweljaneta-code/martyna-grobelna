@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <path d="M32 3c16 0 29 11 29 27 0 18-12 31-29 31S3 48 3 30C3 14 16 3 32 3z" fill="#14130f"/>
+  <text x="32" y="41" text-anchor="middle" font-family="Poppins, Segoe UI, sans-serif"
+        font-size="26" font-weight="600" fill="#ece5d4">MG</text>
+</svg>

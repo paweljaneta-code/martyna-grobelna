@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 420" role="img"
+     aria-label="Miejsce na zdjęcie portretowe">
+  <rect width="400" height="420" fill="#ece5d4"/>
+  <g fill="none" stroke="#b6ab8e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="200" cy="168" r="66"/>
+    <path d="M92 352c0-62 48-104 108-104s108 42 108 104"/>
+  </g>
+  <text x="200" y="372" text-anchor="middle" font-family="Poppins, sans-serif"
+        font-size="15" fill="#a2957a">zdjęcie — do podmiany</text>
+</svg>
