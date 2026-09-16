@@ -35,7 +35,7 @@ Co się w nim da:
 | przejść na inną podstronę | spis **Strony** na samej górze lewej kolumny |
 | dodać podstronę | przycisk **+ Nowa podstrona** |
 | zmienić kolejność sekcji | przeciągnij za uchwyt ⠿ w lewej kolumnie |
-| **przesunąć element** | dodaj sekcję **Swobodne płótno**, chwyć niebieskie kółko na bloku |
+| **przesunąć element** | zaznacz sekcję → **Zamień na swobodne płótno**, potem chwyć niebieskie kółko na bloku |
 | **zmienić rozmiar elementu** | chwyć żółty róg bloku na płótnie |
 | zmienić kolor sekcji albo bloku | pola koloru w panelu po prawej |
 | ukryć sekcję bez kasowania | ikona oka przy jej nazwie |
@@ -58,9 +58,19 @@ wystrzeloną naraz).
 
 ### Swobodne płótno — jak to działa
 
+**Zwykłe sekcje mają układ ustalony i nic się w nich nie przesuwa.** To nie
+usterka: powitanie, filary i karty oferty mają wyglądać tak samo za każdym
+razem. Kiedy chcesz elementy poprzestawiać, zaznacz sekcję i kliknij
+**Zamień na swobodne płótno** — cała jej treść rozkłada się wtedy na bloki
+z uchwytami, ustawione podobnie do układu, z którego pochodzi.
+
 Sekcja **Swobodne płótno** trzyma bloki, które przesuwa się myszą: nagłówki,
 teksty, miejsca na zdjęcia, grafiki i przyciski. Każdy ma własny kolor pisma,
-własne tło, wyrównanie i wielkość.
+własne tło, wyrównanie i wielkość. Uchwyty pokazują się po najechaniu na blok:
+**niebieskie kółko** przesuwa, **żółty róg** zmienia rozmiar.
+
+Bloki wolno na siebie nasunąć — płótno tego nie blokuje, bo bywa potrzebne.
+Jeśli zrobisz to przez pomyłkę, cofa Ctrl+Z.
 
 Bloki **przyciągają się do siatki dwunastu kolumn**, a nie stają w dowolnym
 punkcie. To celowe. Canva projektuje na kartkę o stałym rozmiarze; strona musi

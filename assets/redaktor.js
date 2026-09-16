@@ -654,7 +654,9 @@
     if (idx < 0) {
       cel.innerHTML = '<p class="pusty">Kliknij dowolny fragment strony w podglądzie, ' +
         'żeby go tu ustawić.<br><br>W podglądzie możesz też pisać wprost po tekście — ' +
-        'zmiany zapisują się same.</p>';
+        'zmiany zapisują się same.<br><br><strong style="color:#e8e8ea">Chcesz przesuwać ' +
+        'elementy myszą?</strong> Wybierz sekcję i kliknij „Zamień na swobodne płótno". ' +
+        'Dopiero bloki na płótnie mają uchwyty do chwytania.</p>';
       return;
     }
     const s = R.strona().sekcje[idx];
@@ -664,6 +666,41 @@
     tytulik.style.cssText = "position:static;padding:0 0 10px";
     tytulik.textContent = R.NAZWY_TYPOW[s.typ] || s.typ;
     cel.append(tytulik);
+
+    /* Najczęstsze nieporozumienie: ktoś najeżdża na tekst i nic się nie
+       dzieje, bo w sekcji o ustalonym układzie nie ma czego chwycić.
+       Zamiast tłumaczyć to w instrukcji, mówimy o tym w miejscu, w którym
+       problem powstaje — i od razu dajemy wyjście. */
+    if (s.typ !== "plotno" && PLOTNO_MOZLIWE.has(s.typ)) {
+      const ramka = document.createElement("div");
+      ramka.style.cssText = "background:#26262e;border:1px solid #33333d;border-radius:8px;" +
+        "padding:11px 12px;margin-bottom:16px";
+      const tekst = document.createElement("p");
+      tekst.style.cssText = "margin:0 0 9px;font-size:11.5px;line-height:1.55;color:#9a9aa6";
+      tekst.innerHTML = "Ta sekcja ma <strong style=\"color:#e8e8ea\">ustalony układ</strong> — " +
+        "elementów nie da się w niej przesuwać myszą. Zamiana na płótno rozkłada całą jej " +
+        "treść na bloki, które chwyta się i przesuwa.";
+      const przycisk = document.createElement("button");
+      przycisk.className = "btn";
+      przycisk.style.width = "100%";
+      przycisk.textContent = "Zamień na swobodne płótno";
+      przycisk.addEventListener("click", () => {
+        if (!confirm("Zamienić tę sekcję na swobodne płótno?\n\n" +
+                     "Cała treść zostaje, ale ustawienia typowe dla tej sekcji " +
+                     "(np. kształt zdjęcia, liczba kolumn) przestają obowiązywać.\n\n" +
+                     "Cofnie to Ctrl+Z.")) return;
+        zapamietaj();
+        const nowa = naPlotno(s);
+        R.strona().sekcje[idx] = nowa;
+        R.zaznaczona = nowa.id;
+        R.zaznaczonaKarta = null;
+        R.zaznaczonyBlok = null;
+        poZmianie();
+        powiedz("Zamienione. Chwyć niebieskie kółko na bloku, żeby go przesunąć.");
+      });
+      ramka.append(tekst, przycisk);
+      cel.append(ramka);
+    }
 
     for (const opis of USTAWIENIA[s.typ] || []) {
       const el = rysujKontrolke(opis, s, baza, idx);
@@ -1079,6 +1116,122 @@
       });
       ul.append(li);
     });
+  }
+
+  /* ------------------------------------------- zamiana sekcji na płótno */
+  /* Sekcje mają układ ustalony — tak mają wyglądać domyślnie. Ale kiedy
+     ktoś chce przesuwać ich elementy myszą, musi mieć czym: ta funkcja
+     rozkłada sekcję na bloki płótna, zachowując całą treść. Rozstawienie
+     naśladuje układ, z którego sekcja pochodzi, więc po zamianie wygląda
+     podobnie — i dopiero stąd zaczyna się przesuwanie. */
+
+  const PLOTNO_MOZLIWE = new Set(["hero", "tekst", "filary", "formy", "cytat", "cta", "galeria", "cennik", "kontakt"]);
+
+  function naPlotno(s) {
+    const bloki = [];
+    const dodaj = (b) => bloki.push(Object.assign({ wyrownanie: "left" }, b));
+
+    if (s.typ === "hero") {
+      const zeZdjeciem = s.pokazZdjecie !== false;
+      const zdjecieLewo = s.stronaZdjecia !== "prawo";
+      if (zeZdjeciem) {
+        dodaj({ rodzaj: "zdjecie", x: zdjecieLewo ? 0 : 7, y: 0, w: 5, h: 8,
+                zdjecie: s.zdjecie || null, opis: s.opisZdjecia || "" });
+      }
+      const kx = zeZdjeciem && zdjecieLewo ? 6 : 0;
+      let y = 0;
+      dodaj({ rodzaj: "naglowek", x: kx, y, w: 6, h: 2, tresc: s.tytul || "", wielkosc: 2.6 }); y += 2;
+      if (s.lead) { dodaj({ rodzaj: "tekst", x: kx, y, w: 6, h: 2, tresc: s.lead, wielkosc: 1.05 }); y += 2; }
+      for (const a of s.akapity || []) { dodaj({ rodzaj: "tekst", x: kx, y, w: 6, h: 3, tresc: a }); y += 3; }
+      let bx = kx;
+      for (const p of s.przyciski || []) {
+        dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel });
+        bx += 3;
+      }
+
+    } else if (s.typ === "tekst" || s.typ === "cta") {
+      let y = 0;
+      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 8, h: 2, tresc: s.tytul, wielkosc: 1.9 }); y += 2; }
+      for (const a of s.akapity || []) { dodaj({ rodzaj: "tekst", x: 0, y, w: 8, h: 3, tresc: a }); y += 3; }
+      let bx = 0;
+      for (const p of s.przyciski || []) {
+        dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel });
+        bx += 3;
+      }
+
+    } else if (s.typ === "filary" || s.typ === "formy") {
+      let y = 0;
+      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 8, h: 2, tresc: s.tytul, wielkosc: 1.9 }); y += 2; }
+      const karty = s.karty || [];
+      /* Karty w rzędzie, tyle kolumn, ile się mieści: dwanaście dzielone
+         przez liczbę kart, ale nie węziej niż trzy kolumny. */
+      const szer = Math.max(3, Math.floor(12 / Math.max(1, Math.min(karty.length, 4))));
+      karty.forEach((c, i) => {
+        const wRzedzie = Math.floor(12 / szer);
+        const kol = (i % wRzedzie) * szer;
+        const rzad = y + Math.floor(i / wRzedzie) * 9;
+        dodaj({ rodzaj: "grafika", x: kol, y: rzad, w: Math.min(3, szer), h: 3, ikona: c.ikona });
+        dodaj({ rodzaj: "naglowek", x: kol, y: rzad + 3, w: szer, h: 1, tresc: c.nazwa, wielkosc: 1.15 });
+        dodaj({ rodzaj: "tekst", x: kol, y: rzad + 4, w: szer, h: 4, tresc: c.tekst });
+        if (c.przycisk && c.przycisk.tekst)
+          dodaj({ rodzaj: "przycisk", x: kol, y: rzad + 8, w: Math.min(4, szer), h: 1,
+                  tresc: c.przycisk.tekst, cel: c.przycisk.cel });
+      });
+      y += Math.ceil(karty.length / Math.max(1, Math.floor(12 / szer))) * 9;
+      let bx = 0;
+      for (const p of [...(s.przyciskiPod || []), ...(s.przyciskPod && s.przyciskPod.tekst ? [s.przyciskPod] : [])]) {
+        dodaj({ rodzaj: "przycisk", x: bx, y, w: 3, h: 1, tresc: p.tekst, cel: p.cel });
+        bx += 3;
+      }
+
+    } else if (s.typ === "cytat") {
+      dodaj({ rodzaj: "naglowek", x: 2, y: 0, w: 8, h: 3, tresc: s.tresc || "", wielkosc: 1.7, wyrownanie: "center" });
+      if (s.autor) dodaj({ rodzaj: "tekst", x: 2, y: 3, w: 8, h: 1, tresc: s.autor, wyrownanie: "center" });
+
+    } else if (s.typ === "galeria") {
+      let y = 0;
+      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 8, h: 2, tresc: s.tytul, wielkosc: 1.9 }); y += 2; }
+      const kol = s.kolumny || 3;
+      const szer = Math.floor(12 / kol);
+      (s.zdjecia || []).forEach((z, i) => {
+        dodaj({ rodzaj: "zdjecie", x: (i % kol) * szer, y: y + Math.floor(i / kol) * 5,
+                w: szer, h: 5, zdjecie: z, opis: "" });
+      });
+
+    } else if (s.typ === "cennik") {
+      let y = 0;
+      if (s.tytul) { dodaj({ rodzaj: "naglowek", x: 0, y, w: 12, h: 2, tresc: s.tytul, wielkosc: 1.9, wyrownanie: "center" }); y += 2; }
+      for (const p of s.pozycje || []) {
+        dodaj({ rodzaj: "tekst", x: 1, y, w: 7, h: 1, tresc: p.nazwa });
+        dodaj({ rodzaj: "tekst", x: 8, y, w: 3, h: 1, tresc: p.kwota, wyrownanie: "right" });
+        y += 1;
+      }
+      for (const u of s.uwagi || []) { dodaj({ rodzaj: "tekst", x: 1, y, w: 10, h: 2, tresc: u }); y += 2; }
+
+    } else if (s.typ === "kontakt") {
+      let y = 0;
+      dodaj({ rodzaj: "naglowek", x: 0, y, w: 12, h: 2, tresc: s.tytul || "", wielkosc: 2.2, wyrownanie: "center" });
+      y += 2;
+      const kolumny = s.kolumny || [];
+      const szer = Math.max(3, Math.floor(12 / Math.max(1, kolumny.length)));
+      kolumny.forEach((c, i) => {
+        const kol = i * szer;
+        dodaj({ rodzaj: "naglowek", x: kol, y, w: szer, h: 1, tresc: c.naglowek, wielkosc: 1.1 });
+        const linie = [...(c.wiersze || []), ...(c.godziny || []).map((g) => `${g.dzien} — ${g.zakres}`)]
+          .filter((w) => String(w).trim());
+        linie.forEach((w, n) => dodaj({ rodzaj: "tekst", x: kol, y: y + 1 + n, w: szer, h: 1, tresc: w }));
+      });
+    }
+
+    if (!bloki.length) dodaj({ rodzaj: "tekst", x: 0, y: 0, w: 6, h: 2, tresc: "Pusty blok." });
+
+    return {
+      id: nowyId(), typ: "plotno", widoczna: s.widoczna !== false,
+      odstep: s.odstep || "zwykly", rzad: 44, luka: 14,
+      wysokosc: Math.max(6, ...bloki.map((b) => b.y + b.h)),
+      bloki,
+      ...(s.tloSekcji ? { tloSekcji: s.tloSekcji } : {}),
+    };
   }
 
   /* --------------------------------------------------------- bloki płótna */

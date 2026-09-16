@@ -43,7 +43,6 @@ niesie każdą decyzję i to jego się odsyła.
 - [ ] **Mapa dojazdu** — miejsce zostawione puste. Osadzenie Google Maps
       wciąga skrypty śledzące; decyzja należy do właścicielki strony.
       Kod osadzenia wkleja się w panelu sekcji Kontakt.
-- [ ] **Wersja angielska** — wzorzec miał przełącznik `PL`. Tutaj go nie ma.
 - [ ] **Polityka prywatności** — potrzebna, jeśli dojdzie formularz
       kontaktowy, mapa Google albo jakakolwiek analityka. Przy samym
       adresie e-mail nie.
